@@ -1,7 +1,7 @@
 name: IAInteractables
 version: '2.1.0'
-main: me.FreKillGrib.iAInteractables.Plugin
-api-version: '1.21.4'
+main: me.FireKillGrib.iAInteractables.Plugin
+api-version: '1.20'
 
 depend:
   - PlaceholderAPI
