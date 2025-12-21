@@ -1,0 +1,9 @@
+name: IAInteractables
+version: '2.0.0'
+main: me.gaf1.iAInteractables.Plugin
+api-version: '1.21.4'
+
+depend:
+  - PlaceholderAPI
+  - ItemsAdder
+

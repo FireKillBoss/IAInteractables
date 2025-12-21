@@ -1,0 +1,67 @@
+title: "&dКастомная печка"
+itemsadder-furniture: "myitems:custom_furnace"
+structure:
+  - "X X X X X X X X X"
+  - "X X X X X X X X X"
+  - "X A X B X U X R X"
+  - "X X X X X X X X X"
+  - "X X X X X X X X X"
+
+filler:
+  material: BLACK_STAINED_GLASS_PANE
+  name: ""
+  lore: []
+
+effects:
+  cooking-interval: 20
+  on-start:
+    sound:
+      sound: BLOCK_FURNACE_FIRE_CRACKLE
+      category: BLOCKS
+      volume: 1.0
+      pitch: 1.0
+    particle:
+      particle: FLAME
+      count: 15
+      offset-x: 0.3
+      offset-y: 0.3
+      offset-z: 0.3
+      speed: 0.05
+  on-cooking:
+    sound:
+      sound: BLOCK_LAVA_POP
+      category: BLOCKS
+      volume: 0.5
+      pitch: 1.5
+    particle:
+      particle: SMOKE_NORMAL
+      count: 5
+      offset-x: 0.2
+      offset-y: 0.4
+      offset-z: 0.2
+      speed: 0.02
+  on-complete:
+    sound:
+      sound: BLOCK_ANVIL_LAND
+      category: BLOCKS
+      volume: 0.8
+      pitch: 1.8
+    particle:
+      particle: VILLAGER_HAPPY
+      count: 20
+      offset-x: 0.5
+      offset-y: 0.5
+      offset-z: 0.5
+      speed: 0.1
+
+recipes:
+  1z:
+    cook-time: 100
+    result:
+      material: IRON_BLOCK
+      amount: 1
+    raws:
+      A: [IRON_ORE]
+      B: [DEEPSLATE]
+    fuels:
+      U: [COAL]
