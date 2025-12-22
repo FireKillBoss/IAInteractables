@@ -4,9 +4,10 @@
   <img src="https://img.shields.io/badge/Minecraft-1.20.5+-brightgreen" alt="Minecraft Version">
   <img src="https://img.shields.io/badge/Java-21-orange" alt="Java Version">
   <img src="https://img.shields.io/badge/Platform-Paper-blue" alt="Platform">
+  <img src="https://img.shields.io/badge/Platform-Spigot-yellow" alt="Platform">
 </p>
 
-Custom furnaces and workbenches plugin for Paper 1.20.5+ with ItemsAdder integration
+Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with ItemsAdder integration
 
 ## ✨ Features
 
@@ -30,7 +31,7 @@ Custom furnaces and workbenches plugin for Paper 1.20.5+ with ItemsAdder integra
 
 ## 📦 Requirements
 
-- **Server**: [Paper](https://papermc.io/) 1.20.5 or higher
+- **Server**: [Paper](https://papermc.io/) or [Spigot](https://www.spigotmc.org/) 1.20.5 or higher
 - **Java**: 21 or higher
 - **Dependencies**:
   - [PlaceholderAPI](https://www.spigotmc.org/resources/6245/)
@@ -49,80 +50,137 @@ Custom furnaces and workbenches plugin for Paper 1.20.5+ with ItemsAdder integra
 ### Furnace Example (`furnaces/blast_furnace.yml`)
 
 ```yaml
-title: "&6Blast Furnace"
-itemsadder-furniture: "namespace:blast_furnace"
-
+title: "&dCustom furnace"
+itemsadder-furniture: "myitems:custom_furnace" #Also rename default.yml to [custom_furnace] for it to work!
 structure:
   - "X X X X X X X X X"
-  - "X X A X B X X X X"
-  - "X X X X X X R X X"
-  - "X X X F X X X X X"
+  - "X X X X X X X X X"
+  - "X A B X P X R X X"
+  - "X X U X X X X X X"
   - "X X X X X X X X X"
 
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
-
-recipes:
-  steel:
-    cook-time: 400
-    result:
-      material: ia-steel_ingot
-      amount: 1
-    raws:
-      A: [IRON_INGOT, ia-iron_ore]
-      B: [COAL, CHARCOAL]
-    fuels:
-      F: [COAL, LAVA_BUCKET]
+  lore: []
 
 effects:
-  particles:
-    on-start:
+  cooking-interval: 20
+  on-start:
+    sound:
+      sound: BLOCK_FURNACE_FIRE_CRACKLE
+      category: BLOCKS
+      volume: 1.0
+      pitch: 1.0
+    particle:
       particle: FLAME
+      count: 15
+      offset-x: 0.3
+      offset-y: 0.3
+      offset-z: 0.3
+      speed: 0.05
+  on-cooking:
+    sound:
+      sound: BLOCK_LAVA_POP
+      category: BLOCKS
+      volume: 0.5
+      pitch: 1.5
+    particle:
+      particle: SMOKE_NORMAL
+      count: 5
+      offset-x: 0.2
+      offset-y: 0.4
+      offset-z: 0.2
+      speed: 0.02
+  on-complete:
+    sound:
+      sound: BLOCK_ANVIL_LAND
+      category: BLOCKS
+      volume: 0.8
+      pitch: 1.8
+    particle:
+      particle: VILLAGER_HAPPY
       count: 20
       offset-x: 0.5
       offset-y: 0.5
       offset-z: 0.5
-      speed: 0.05
-    on-complete:
-      particle: TOTEM_OF_UNDYING
-      count: 30
-  
-  sounds:
-    on-start:
-      sound: block.furnace.fire_crackle
-      volume: 1.0
-      pitch: 1.0
+      speed: 0.1
 
-  cooking-interval: 60
+recipes:
+  1z:
+    cook-time: 100
+    result:
+      material: IRON_BLOCK
+      amount: 1
+    raws:
+      A: [IRON_ORE]
+      B: [DEEPSLATE]
+    fuels:
+      U: [COAL]
 ```
 
 ### Workbench Example (`workbenches/default.yml`)
 
 ```yaml
-title: "&bAdvanced Crafting Table"
-
+title: "&dCustom workbench"
+itemsadder-furniture: "myitems:custom_workbench" #Also rename default.yml to [custom_workbench] for it to work!
 structure:
-  - "X X X X X X X X X"
-  - "X 0 1 2 X X X R X"
-  - "X 3 4 5 X X X X X"
-  - "X 6 7 8 X X X X X"
+  - "O X X X O X X X X"
+  - "X X O X X X X X X"
+  - "X O O O X X X R X"
+  - "X X O X X X X X X"
+  - "O X X X O X X X X"
 
 filler:
-  material: GRAY_STAINED_GLASS_PANE
+  material: BLACK_STAINED_GLASS_PANE
+  name: ""
+  lore: []
+
+effects:
+  on-craft:
+    sound:
+      sound: ENTITY_EXPERIENCE_ORB_PICKUP
+      category: PLAYERS
+      volume: 1.0
+      pitch: 1.2
+    particle:
+      particle: ENCHANTMENT_TABLE
+      count: 30
+      offset-x: 0.5
+      offset-y: 1.0
+      offset-z: 0.5
+      speed: 0.5
 
 recipes:
-  diamond_sword:
+  first:
     result:
-      material: DIAMOND_SWORD
+      material: IRON_BLOCK
       amount: 1
     0:
-      material: DIAMOND
+      material: STONE
       amount: 1
     1:
-      material: DIAMOND
+      material: STONE
+      amount: 1
+    2:
+      material: STONE
+      amount: 1
+    3:
+      material: STONE
       amount: 1
     4:
-      material: STICK
+      material: STONE
+      amount: 1
+    5:
+      material: STONE
+      amount: 1
+    6:
+      material: STONE
+      amount: 1
+    7:
+      material: STONE
+      amount: 1
+    8:
+      material: STONE
       amount: 1
 ```
