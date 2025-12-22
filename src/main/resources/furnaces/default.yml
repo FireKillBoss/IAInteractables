@@ -1,10 +1,10 @@
-title: "&dКастомная печка"
+title: "&dCustom furnace"
 itemsadder-furniture: "myitems:custom_furnace" #Also rename default.yml to [custom_furnace] for it to work!
 structure:
   - "X X X X X X X X X"
   - "X X X X X X X X X"
-  - "X A X B X U X R X"
-  - "X X X X X X X X X"
+  - "X A B X P X R X X"
+  - "X X U X X X X X X"
   - "X X X X X X X X X"
 
 filler:
