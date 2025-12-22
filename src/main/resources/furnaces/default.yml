@@ -1,5 +1,5 @@
 title: "&dКастомная печка"
-itemsadder-furniture: "myitems:custom_furnace"
+itemsadder-furniture: "myitems:custom_furnace" #Also rename default.yml to [custom_furnace] for it to work!
 structure:
   - "X X X X X X X X X"
   - "X X X X X X X X X"

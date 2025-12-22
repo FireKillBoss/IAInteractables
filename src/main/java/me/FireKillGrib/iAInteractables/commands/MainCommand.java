@@ -8,7 +8,6 @@ import me.FireKillGrib.iAInteractables.data.Workbench;
 import me.FireKillGrib.iAInteractables.managers.RecipeManager;
 import me.FireKillGrib.iAInteractables.menu.WorkbenchGUI;
 import me.FireKillGrib.iAInteractables.utils.ChatUtil;
-
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -34,7 +33,7 @@ public class MainCommand extends BaseCommand {
             ChatUtil.sendConfigMessage(player,"workbench-not-found");
             return;
         }
-        WorkbenchGUI.getGui(player,workbench).open();
+        new WorkbenchGUI(workbench).open(player);
     }
 
     @Subcommand("furnace")

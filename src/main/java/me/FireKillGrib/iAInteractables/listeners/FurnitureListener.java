@@ -9,7 +9,6 @@ import me.FireKillGrib.iAInteractables.data.FurnaceInstance;
 import me.FireKillGrib.iAInteractables.data.Workbench;
 import me.FireKillGrib.iAInteractables.menu.FurnaceGUI;
 import me.FireKillGrib.iAInteractables.menu.WorkbenchGUI;
-
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -23,27 +22,20 @@ public class FurnitureListener implements Listener {
     @EventHandler
     public void onFurnitureInteract(FurnitureInteractEvent event) {
         Player player = event.getPlayer();
-        Entity entity = event.getBukkitEntity();
-        CustomFurniture furniture = CustomFurniture.byAlreadySpawned(entity);
-        if (furniture == null) return;
-        String furnitureId = furniture.getNamespacedID();
-        Location loc = entity.getLocation();
-        String furnaceType = getTypeByFurniture(furnitureId, "furnaces");
-        if (furnaceType != null) {
+        String furnitureId = event.getNamespacedID();
+        String name = furnitureId.contains(":") 
+            ? furnitureId.split(":")[1] 
+            : furnitureId;
+        Furnace furnace = Plugin.getInstance().getRecipeManager().getFurnace(name);
+        if (furnace != null) {
             event.setCancelled(true);
-            Furnace furnace = Plugin.getInstance().getRecipeManager().getFurnace(furnaceType);
-            if (furnace == null) return;
-            FurnaceInstance instance = Plugin.getInstance().getInstanceManager()
-                    .getFurnaceInstance(loc, furnaceType);
-            new FurnaceGUI(player, furnace, instance).open();
+            new FurnaceGUI(furnace, event.getBukkitEntity().getLocation()).open(player);
             return;
         }
-        String workbenchType = getTypeByFurniture(furnitureId, "workbenches");
-        if (workbenchType != null) {
+        Workbench workbench = Plugin.getInstance().getRecipeManager().getWorkbench(name);
+        if (workbench != null) {
             event.setCancelled(true);
-            Workbench workbench = Plugin.getInstance().getRecipeManager().getWorkbench(workbenchType);
-            if (workbench == null) return;
-            WorkbenchGUI.getGui(player, workbench).open();
+            new WorkbenchGUI(workbench).open(player);
         }
     }
     @EventHandler

@@ -16,136 +16,185 @@ public class RecipeManager {
     private final List<Furnace> furnaces = new ArrayList<>();
     private final List<Workbench> workbenches = new ArrayList<>();
     public void loadFurnaces() {
-        furnaces.clear();
-        File folder = new File(Plugin.getInstance().getDataFolder(), "furnaces");
-        if (!folder.exists()) return;
-        File[] files = folder.listFiles((d, name) -> name.endsWith(".yml"));
-        if (files == null) return;
-        for (File file : files) {
-            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-            String name = file.getName().replace(".yml", "");
-            String title = cfg.getString("title", "&cНазвание не указано");
-            List<String> structure = cfg.getStringList("structure");
-            ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
-            ItemProvider filler;
-            if (fillerSec != null) {
-                String material = fillerSec.getString("material", "BLACK_STAINED_GLASS_PANE");
-                String displayName = fillerSec.getString("name", "");
-                filler = new ItemBuilder(Material.valueOf(material))
-                    .setDisplayName(displayName)
-                    .getItemProvider();
+    furnaces.clear();
+    File folder = new File(Plugin.getInstance().getDataFolder(), "furnaces");
+    if (!folder.exists()) return;
+    File[] files = folder.listFiles((d, name) -> name.endsWith(".yml"));
+    if (files == null) return;
+    for (File file : files) {
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+        String name = file.getName().replace(".yml", "");
+        String title = cfg.getString("title", "&cНазвание не указано");
+        List<String> structure = cfg.getStringList("structure");
+        ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
+        ItemProvider filler;
+        if (fillerSec != null) {
+            String materialStr = fillerSec.getString("material", "BLACK_STAINED_GLASS_PANE");
+            String displayName = fillerSec.getString("name", "");
+            List<String> lore = fillerSec.getStringList("lore");
+            ItemStack fillerItem;
+            if (materialStr.startsWith("ia-") || materialStr.contains(":")) {
+                fillerItem = new ItemsBuilder(materialStr).build();
             } else {
-                filler = new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
-                    .setDisplayName("")
-                    .getItemProvider();
-            }
-            Set<FurnaceRecipe> recipes = new HashSet<>();
-            ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
-            if (recipesSec != null) {
-                for (String key : recipesSec.getKeys(false)) {
-                    ConfigurationSection s = recipesSec.getConfigurationSection(key);
-                    if (s == null) continue;
-                    int cookTime = s.getInt("cook-time", 100);
-                    ConfigurationSection resultSec = s.getConfigurationSection("result");
-                    ItemStack result = null;
-                    if (resultSec != null) {
-                        String material = resultSec.getString("material");
-                        int amount = resultSec.getInt("amount", 1);
-                        if (material != null) {
-                            result = new ItemStack(Material.valueOf(material), amount);
-                        }
-                    }
-                    if (result == null) continue;
-                    Map<Character, Set<ItemStack>> raws = new HashMap<>();
-                    Map<Character, Set<ItemStack>> fuels = new HashMap<>();
-                    ConfigurationSection rawsSec = s.getConfigurationSection("raws");
-                    if (rawsSec != null) {
-                        for (String slotKey : rawsSec.getKeys(false)) {
-                            char ch = slotKey.charAt(0);
-                            Set<ItemStack> set = new HashSet<>();
-                            
-                            if (rawsSec.isList(slotKey)) {
-                                for (String mat : rawsSec.getStringList(slotKey)) {
-                                    try {
-                                        set.add(new ItemStack(Material.valueOf(mat)));
-                                    } catch (IllegalArgumentException e) {
-                                        set.add(new ItemsBuilder(mat).build());
-                                    }
-                                }
-                            } else {
-                                String singleMat = rawsSec.getString(slotKey);
-                                if (singleMat != null) {
-                                    try {
-                                        set.add(new ItemStack(Material.valueOf(singleMat)));
-                                    } catch (IllegalArgumentException e) {
-                                        set.add(new ItemsBuilder(singleMat).build());
-                                    }
-                                }
-                            }
-                            if (!set.isEmpty()) {
-                                raws.put(ch, set);
-                            }
-                        }
-                    }
-                    ConfigurationSection fuelsSec = s.getConfigurationSection("fuels");
-                    if (fuelsSec != null) {
-                        for (String slotKey : fuelsSec.getKeys(false)) {
-                            char ch = slotKey.charAt(0);
-                            Set<ItemStack> set = new HashSet<>();
-                            
-                            if (fuelsSec.isList(slotKey)) {
-                                for (String mat : fuelsSec.getStringList(slotKey)) {
-                                    try {
-                                        set.add(new ItemStack(Material.valueOf(mat)));
-                                    } catch (IllegalArgumentException e) {
-                                        set.add(new ItemsBuilder(mat).build());
-                                    }
-                                }
-                            } else {
-                                String singleMat = fuelsSec.getString(slotKey);
-                                if (singleMat != null) {
-                                    try {
-                                        set.add(new ItemStack(Material.valueOf(singleMat)));
-                                    } catch (IllegalArgumentException e) {
-                                        set.add(new ItemsBuilder(singleMat).build());
-                                    }
-                                }
-                            }
-                            if (!set.isEmpty()) {
-                                fuels.put(ch, set);
-                            }
-                        }
-                    }
-                    recipes.add(new FurnaceRecipe(result, cookTime, raws, fuels));
+                try {
+                    fillerItem = new ItemStack(Material.valueOf(materialStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    Plugin.getInstance().getLogger().warning(
+                        "Неизвестный материал '" + materialStr + "' в файле " + file.getName()
+                    );
+                    fillerItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
                 }
             }
+            ItemBuilder builder = new ItemBuilder(fillerItem);
+            if (displayName != null && !displayName.isEmpty()) {
+                builder.setDisplayName(displayName);
+            }
+            if (lore != null && !lore.isEmpty()) {
+                builder.setLore(lore);
+            }
+            filler = builder.getItemProvider();
+            
+        } else {
+            filler = new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
+                .setDisplayName("")
+                .getItemProvider();
+        }
+        Set<FurnaceRecipe> recipes = new HashSet<>();
+        ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
+        if (recipesSec != null) {
+            for (String key : recipesSec.getKeys(false)) {
+                ConfigurationSection s = recipesSec.getConfigurationSection(key);
+                if (s == null) continue;
+                int cookTime = s.getInt("cook-time", 100);
+                ConfigurationSection resultSec = s.getConfigurationSection("result");
+                ItemStack result = null;
+                if (resultSec != null) {
+                    String material = resultSec.getString("material");
+                    int amount = resultSec.getInt("amount", 1);
+                    if (material != null) {
+                        try {
+                            if (material.startsWith("ia-") || material.contains(":")) {
+                                result = new ItemsBuilder(material).build();
+                                result.setAmount(amount);
+                            } else {
+                                result = new ItemStack(Material.valueOf(material.toUpperCase()), amount);
+                            }
+                        } catch (IllegalArgumentException e) {
+                            Plugin.getInstance().getLogger().warning(
+                                "Неизвестный материал результата '" + material + 
+                                "' в рецепте " + key + " файла " + file.getName()
+                            );
+                        }
+                    }
+                }
+                if (result == null) continue;
+                Map<Character, Set<ItemStack>> raws = new HashMap<>();
+                Map<Character, Set<ItemStack>> fuels = new HashMap<>();
+                ConfigurationSection rawsSec = s.getConfigurationSection("raws");
+                if (rawsSec != null) {
+                    for (String slotKey : rawsSec.getKeys(false)) {
+                        char ch = slotKey.charAt(0);
+                        Set<ItemStack> set = new HashSet<>();
+                        List<String> materials = rawsSec.isList(slotKey) 
+                            ? rawsSec.getStringList(slotKey) 
+                            : Collections.singletonList(rawsSec.getString(slotKey));
+                        for (String mat : materials) {
+                            if (mat == null || mat.isEmpty()) continue;
+                            try {
+                                if (mat.startsWith("ia-") || mat.contains(":")) {
+                                    set.add(new ItemsBuilder(mat).build());
+                                } else {
+                                    set.add(new ItemStack(Material.valueOf(mat.toUpperCase())));
+                                }
+                            } catch (IllegalArgumentException e) {
+                                Plugin.getInstance().getLogger().warning(
+                                    "Неизвестный материал '" + mat + 
+                                    "' в raws." + slotKey + " рецепта " + key + " файла " + file.getName()
+                                );
+                            }
+                        }
+                        if (!set.isEmpty()) {
+                            raws.put(ch, set);
+                        }
+                    }
+                }
+                ConfigurationSection fuelsSec = s.getConfigurationSection("fuels");
+                if (fuelsSec != null) {
+                    for (String slotKey : fuelsSec.getKeys(false)) {
+                        char ch = slotKey.charAt(0);
+                        Set<ItemStack> set = new HashSet<>();
+                        List<String> materials = fuelsSec.isList(slotKey) 
+                            ? fuelsSec.getStringList(slotKey) 
+                            : Collections.singletonList(fuelsSec.getString(slotKey));
+                        for (String mat : materials) {
+                            if (mat == null || mat.isEmpty()) continue;
+                            try {
+                                if (mat.startsWith("ia-") || mat.contains(":")) {
+                                    set.add(new ItemsBuilder(mat).build());
+                                } else {
+                                    set.add(new ItemStack(Material.valueOf(mat.toUpperCase())));
+                                }
+                            } catch (IllegalArgumentException e) {
+                                Plugin.getInstance().getLogger().warning(
+                                    "Неизвестный материал '" + mat + 
+                                    "' в fuels." + slotKey + " рецепта " + key + " файла " + file.getName()
+                                );
+                            }
+                        }
+                        if (!set.isEmpty()) {
+                            fuels.put(ch, set);
+                        }
+                    }
+                }
+                recipes.add(new FurnaceRecipe(result, cookTime, raws, fuels));
+            }
+        }
             FurnaceEffects effects = FurnaceEffects.fromConfig(cfg.getConfigurationSection("effects"));
             furnaces.add(new Furnace(name, title, structure, filler, recipes, effects));
         }
     }
     public void loadWorkbenches() {
-        workbenches.clear();
-        File folder = new File(Plugin.getInstance().getDataFolder(), "workbenches");
-        if (!folder.exists()) return;
-        File[] files = folder.listFiles((d, name) -> name.endsWith(".yml"));
-        if (files == null) return;
-        for (File file : files) {
-            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-            String name = file.getName().replace(".yml", "");
-            String title = cfg.getString("title", "&cНазвание не указано");
-            List<String> structure = cfg.getStringList("structure");
-            ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
-            ItemProvider filler;
-            if (fillerSec != null) {
-                String material = fillerSec.getString("material", "BLACK_STAINED_GLASS_PANE");
-                String displayName = fillerSec.getString("name", "");
-                filler = new ItemBuilder(Material.valueOf(material))
-                    .setDisplayName(displayName)
-                    .getItemProvider();
+    workbenches.clear();
+    File folder = new File(Plugin.getInstance().getDataFolder(), "workbenches");
+    if (!folder.exists()) return;
+    File[] files = folder.listFiles((d, name) -> name.endsWith(".yml"));
+    if (files == null) return;
+    for (File file : files) {
+        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+        String name = file.getName().replace(".yml", "");
+        String title = cfg.getString("title", "&cНазвание не указано");
+        List<String> structure = cfg.getStringList("structure");
+        ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
+        ItemProvider filler;
+        if (fillerSec != null) {
+            String materialStr = fillerSec.getString("material", "BLACK_STAINED_GLASS_PANE");
+            String displayName = fillerSec.getString("name", "");
+            List<String> lore = fillerSec.getStringList("lore");
+            ItemStack fillerItem;
+            if (materialStr.startsWith("ia-") || materialStr.contains(":")) {
+                fillerItem = new ItemsBuilder(materialStr).build();
             } else {
-                filler = new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
-                    .setDisplayName("")
-                    .getItemProvider();
+                try {
+                    fillerItem = new ItemStack(Material.valueOf(materialStr.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    Plugin.getInstance().getLogger().warning(
+                        "Неизвестный материал '" + materialStr + "' в файле " + file.getName()
+                    );
+                    fillerItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+                }
+            }
+            ItemBuilder builder = new ItemBuilder(fillerItem);
+            if (displayName != null && !displayName.isEmpty()) {
+                builder.setDisplayName(displayName);
+            }
+            if (lore != null && !lore.isEmpty()) {
+                builder.setLore(lore);
+            }
+            filler = builder.getItemProvider();
+        } else {
+            filler = new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE)
+                .setDisplayName("")
+                .getItemProvider();
             }
             Set<WorkbenchRecipe> recipes = new HashSet<>();
             ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
@@ -159,7 +208,19 @@ public class RecipeManager {
                         String material = resultSec.getString("material");
                         int amount = resultSec.getInt("amount", 1);
                         if (material != null) {
-                            result = new ItemStack(Material.valueOf(material), amount);
+                            try {
+                                if (material.startsWith("ia-") || material.contains(":")) {
+                                    result = new ItemsBuilder(material).build();
+                                    result.setAmount(amount);
+                                } else {
+                                    result = new ItemStack(Material.valueOf(material.toUpperCase()), amount);
+                                }
+                            } catch (IllegalArgumentException e) {
+                                Plugin.getInstance().getLogger().warning(
+                                    "Неизвестный материал результата '" + material + 
+                                    "' в рецепте " + key + " файла " + file.getName()
+                                );
+                            }
                         }
                     }
                     if (result == null) continue;
@@ -174,11 +235,19 @@ public class RecipeManager {
                                 int amount = ingredientSec.getInt("amount", 1);
                                 if (material != null) {
                                     try {
-                                        ingredients.put(slot, new ItemStack(Material.valueOf(material), amount));
-                                    } catch (IllegalArgumentException e) {
-                                        ItemStack item = new ItemsBuilder(material).build();
+                                        ItemStack item;
+                                        if (material.startsWith("ia-") || material.contains(":")) {
+                                            item = new ItemsBuilder(material).build();
+                                        } else {
+                                            item = new ItemStack(Material.valueOf(material.toUpperCase()));
+                                        }
                                         item.setAmount(amount);
                                         ingredients.put(slot, item);
+                                    } catch (IllegalArgumentException e) {
+                                        Plugin.getInstance().getLogger().warning(
+                                            "Неизвестный материал '" + material + 
+                                            "' в слоте " + slot + " рецепта " + key + " файла " + file.getName()
+                                        );
                                     }
                                 }
                             }
@@ -209,5 +278,14 @@ public class RecipeManager {
             .filter(w -> w.getName().equals(name))
             .findFirst()
             .orElse(null);
+    }
+    public void clearAll() {
+        furnaces.clear();
+        workbenches.clear();
+    }
+    public void reload() {
+        clearAll();
+        loadFurnaces();
+        loadWorkbenches();
     }
 }

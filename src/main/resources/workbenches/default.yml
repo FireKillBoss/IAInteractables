@@ -1,5 +1,5 @@
 title: "&dКастомный верстак"
-itemsadder-furniture: "myitems:custom_furnace"
+itemsadder-furniture: "myitems:custom_workbench" #Also rename default.yml to [custom_workbench] for it to work!
 structure:
   - "O X X X O X X X X"
   - "X X O X X X X X X"
