@@ -161,15 +161,14 @@ public class FurnaceController {
         currentRecipe = recipe;
         cookingProgress = 0;
         playStartEffects();
-        Plugin.getInstance().getLogger().info("Started cooking: " + recipe.getResult().getType());
         cookingTask = Bukkit.getScheduler().runTaskTimer(Plugin.getInstance(), () -> {
             if (!checkIngredientsPresent(recipe, slots)) {
-                Plugin.getInstance().getLogger().warning("Ingredients deleted, stopping cooking.");
                 cancelCooking();
                 return;
             }
             cookingProgress++;
-            if (furnace.getEffects() != null && cookingProgress % furnace.getEffects().getCookingInterval() == 0) {
+            if (furnace.getEffects() != null && 
+                cookingProgress % furnace.getEffects().getCookingInterval() == 0) {
                 playCookingEffects();
             }
             if (cookingProgress >= recipe.getCookTimeTicks()) {
@@ -235,130 +234,105 @@ public class FurnaceController {
         playEffect(furnace.getEffects().getOnComplete());
     }
     private void playEffect(FurnaceEffects.EffectConfig effect) {
-        if (effect == null) {
-            Plugin.getInstance().getLogger().warning("EffectConfig == null");
-            return;
-        }
+        if (effect == null) return;
         if (location.getWorld() == null) {
-            Plugin.getInstance().getLogger().severe("Furnace world isn't loaded!");
+            Plugin.getInstance().getLogger().severe(
+                "Cannot play effect: world not loaded at " + location);
             return;
         }
         if (!location.getChunk().isLoaded()) {
-            Plugin.getInstance().getLogger().warning("Chunk not loaded, loading...");
             location.getChunk().load();
         }
-        Plugin.getInstance().getLogger().info("Original location: " + 
-            String.format("%.2f, %.2f, %.2f", location.getX(), location.getY(), location.getZ()));
         Bukkit.getScheduler().runTask(Plugin.getInstance(), () -> {
             try {
                 if (effect.getParticle() != null) {
                     ParticleConfig particle = effect.getParticle();
-                    Location blockCenter = new Location(
+                    Location particleLocation = new Location(
                         location.getWorld(),
                         location.getBlockX() + 0.5,
                         location.getBlockY() + 0.7,
                         location.getBlockZ() + 0.5
                     );
-                    Plugin.getInstance().getLogger().info("Particle spawn at: " + 
-                        String.format("%.2f, %.2f, %.2f", blockCenter.getX(), blockCenter.getY(), blockCenter.getZ()));
-                    Plugin.getInstance().getLogger().info("  Type: " + particle.getParticle());
-                    Plugin.getInstance().getLogger().info("  Count: " + particle.getCount());
-                    Plugin.getInstance().getLogger().info("  Offset: X=" + particle.getOffsetX() + 
-                        ", Y=" + particle.getOffsetY() + ", Z=" + particle.getOffsetZ());
-                    Plugin.getInstance().getLogger().info("  Speed: " + particle.getSpeed());
                     location.getWorld().spawnParticle(
                         particle.getParticle(),
-                        blockCenter,
+                        particleLocation,
                         particle.getCount(),
                         particle.getOffsetX(),
                         particle.getOffsetY(),
                         particle.getOffsetZ(),
                         particle.getSpeed()
                     );
-                    Plugin.getInstance().getLogger().info("Particle spawned successfully");
                 }
                 if (effect.getSound() != null) {
                     SoundConfig sound = effect.getSound();
-                    Location soundCenter = new Location(
+                    Location soundLocation = new Location(
                         location.getWorld(),
                         location.getBlockX() + 0.5,
                         location.getBlockY() + 0.5,
                         location.getBlockZ() + 0.5
                     );
-                    Plugin.getInstance().getLogger().info("Sound at: " + 
-                        String.format("%.2f, %.2f, %.2f", soundCenter.getX(), soundCenter.getY(), soundCenter.getZ()));
-                    Plugin.getInstance().getLogger().info("  Type: " + sound.getSound());
-                    Plugin.getInstance().getLogger().info("  Volume: " + sound.getVolume() + ", Pitch: " + sound.getPitch());
                     location.getWorld().playSound(
-                        soundCenter,
+                        soundLocation,
                         sound.getSound(),
                         sound.getCategory(),
                         sound.getVolume(),
                         sound.getPitch()
                     );
-                    for (Player nearbyPlayer : location.getWorld().getNearbyPlayers(soundCenter, 32)) {
+                    for (Player nearbyPlayer : location.getWorld().getNearbyPlayers(soundLocation, 32)) {
                         nearbyPlayer.playSound(
-                            soundCenter,
+                            soundLocation,
                             sound.getSound(),
                             sound.getCategory(),
                             sound.getVolume(),
                             sound.getPitch()
                         );
                     }
-                    Plugin.getInstance().getLogger().info("Sound played successfully");
                 }
             } catch (Exception e) {
-                Plugin.getInstance().getLogger().severe("Error playing effect:");
-                e.printStackTrace();
+                Plugin.getInstance().getLogger().severe(
+                    "Error playing furnace effect at " + location + ": " + e.getMessage());
             }
         });
     }
-    public void shutdown() {
-        if (cookingTask != null) {
-            cookingTask.cancel();
-        }
-        Plugin.getInstance().getFurnaceDataManager()
-            .save(location, inventory, cookingProgress);
-    }
     private boolean checkIngredientsPresent(FurnaceRecipe recipe, Map<Character, Integer> slots) {
-    for (Map.Entry<Character, Set<ItemStack>> rawEntry : recipe.getRaws().entrySet()) {
-        char slotChar = rawEntry.getKey();
-        Set<ItemStack> allowedItems = rawEntry.getValue();
-        Integer slotIndex = slots.get(slotChar);
-        if (slotIndex == null) return false;
-        ItemStack item = inventory.getItem(slotIndex);
-        if (item == null || item.getType() == Material.AIR) {
-            return false;
-        }
-        boolean matches = false;
-        for (ItemStack allowed : allowedItems) {
-            if (item.getType() == allowed.getType()) {
-                matches = true;
-                break;
+        for (Map.Entry<Character, Set<ItemStack>> rawEntry : recipe.getRaws().entrySet()) {
+            char slotChar = rawEntry.getKey();
+            Set<ItemStack> allowedItems = rawEntry.getValue();
+            Integer slotIndex = slots.get(slotChar);
+            if (slotIndex == null) return false;
+            ItemStack item = inventory.getItem(slotIndex);
+            if (item == null || item.getType() == Material.AIR) {
+                return false;
             }
-        }
-        if (!matches) return false;
-    }
-    for (Map.Entry<Character, Set<ItemStack>> fuelEntry : recipe.getFuels().entrySet()) {
-        char slotChar = fuelEntry.getKey();
-        Set<ItemStack> allowedFuels = fuelEntry.getValue();
-        Integer slotIndex = slots.get(slotChar);
-        if (slotIndex == null) return false;
-        ItemStack item = inventory.getItem(slotIndex);
-        if (item == null || item.getType() == Material.AIR) {
-            return false;
-        }
-        boolean matches = false;
-        for (ItemStack allowed : allowedFuels) {
-            if (item.getType() == allowed.getType()) {
-                matches = true;
-                break;
+            boolean matches = false;
+            for (ItemStack allowed : allowedItems) {
+                if (item.getType() == allowed.getType()) {
+                    matches = true;
+                    break;
+                }
             }
+            if (!matches) return false;
         }
-        if (!matches) return false;
+        for (Map.Entry<Character, Set<ItemStack>> fuelEntry : recipe.getFuels().entrySet()) {
+            char slotChar = fuelEntry.getKey();
+            Set<ItemStack> allowedFuels = fuelEntry.getValue();
+            Integer slotIndex = slots.get(slotChar);
+            if (slotIndex == null) return false;
+            ItemStack item = inventory.getItem(slotIndex);
+            if (item == null || item.getType() == Material.AIR) {
+                return false;
+            }
+            boolean matches = false;
+            for (ItemStack allowed : allowedFuels) {
+                if (item.getType() == allowed.getType()) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) return false;
+        }
+        return true;
     }
-    return true;
-}
     private void cancelCooking() {
         if (cookingTask != null) {
             cookingTask.cancel();
@@ -369,5 +343,12 @@ public class FurnaceController {
         cookingProgress = 0;
         Plugin.getInstance().getFurnaceDataManager()
             .save(location, inventory, cookingProgress);
-        }
     }
+    public void shutdown() {
+        if (cookingTask != null) {
+            cookingTask.cancel();
+        }
+        Plugin.getInstance().getFurnaceDataManager()
+            .save(location, inventory, cookingProgress);
+    }
+}
