@@ -2,6 +2,7 @@ package me.FireKillGrib.iAInteractables.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import me.FireKillGrib.iAInteractables.Plugin;
 import org.bukkit.configuration.ConfigurationSection;
 
 @AllArgsConstructor
@@ -11,6 +12,7 @@ public class FurnaceEffects {
     private final EffectConfig onCooking;
     private final EffectConfig onComplete;
     private final int cookingInterval;
+    
     @AllArgsConstructor
     @Getter
     public static class EffectConfig {
@@ -18,49 +20,67 @@ public class FurnaceEffects {
         private final SoundConfig sound;
     }
     public static FurnaceEffects fromConfig(ConfigurationSection section) {
-        if (section == null) return null;
-        ConfigurationSection particlesSec = section.getConfigurationSection("particles");
-        ConfigurationSection soundsSec = section.getConfigurationSection("sounds");
-        EffectConfig onStart = null;
-        EffectConfig onCooking = null;
-        EffectConfig onComplete = null;
-        ParticleConfig startParticle = null;
-        SoundConfig startSound = null;
-        if (particlesSec != null && particlesSec.contains("on-start")) {
-            startParticle = ParticleConfig.fromConfig(particlesSec.getConfigurationSection("on-start"));
-        }
-        if (soundsSec != null && soundsSec.contains("on-start")) {
-            startSound = SoundConfig.fromConfig(soundsSec.getConfigurationSection("on-start"));
-        }
-        if (startParticle != null || startSound != null) {
-            onStart = new EffectConfig(startParticle, startSound);
-        }
-        ParticleConfig cookingParticle = null;
-        SoundConfig cookingSound = null;
-        if (particlesSec != null && particlesSec.contains("on-cooking")) {
-            cookingParticle = ParticleConfig.fromConfig(particlesSec.getConfigurationSection("on-cooking"));
-        }
-        if (soundsSec != null && soundsSec.contains("on-cooking")) {
-            cookingSound = SoundConfig.fromConfig(soundsSec.getConfigurationSection("on-cooking"));
-        }
-        if (cookingParticle != null || cookingSound != null) {
-            onCooking = new EffectConfig(cookingParticle, cookingSound);
-        }
-        ParticleConfig completeParticle = null;
-        SoundConfig completeSound = null;
-        if (particlesSec != null && particlesSec.contains("on-complete")) {
-            completeParticle = ParticleConfig.fromConfig(particlesSec.getConfigurationSection("on-complete"));
-        }
-        if (soundsSec != null && soundsSec.contains("on-complete")) {
-            completeSound = SoundConfig.fromConfig(soundsSec.getConfigurationSection("on-complete"));
-        }
-        if (completeParticle != null || completeSound != null) {
-            onComplete = new EffectConfig(completeParticle, completeSound);
-        }
-        int interval = section.getInt("cooking-interval", 40);
-        if (onStart == null && onCooking == null && onComplete == null) {
+        if (section == null) {
+            Plugin.getInstance().getLogger().warning("FurnaceEffects section == null");
             return null;
         }
+        Plugin.getInstance().getLogger().info("Loading FurnaceEffects from config...");
+        int interval = section.getInt("cooking-interval", 20);
+        Plugin.getInstance().getLogger().info("  cooking-interval: " + interval);
+        EffectConfig onStart = loadEffectConfig(section, "on-start");
+        EffectConfig onCooking = loadEffectConfig(section, "on-cooking");
+        EffectConfig onComplete = loadEffectConfig(section, "on-complete");
+        if (onStart == null && onCooking == null && onComplete == null) {
+            Plugin.getInstance().getLogger().warning("None effects are loaded! Returning null.");
+            return null;
+        }
+        Plugin.getInstance().getLogger().info("✓ FurnaceEffects succesfully loaded:");
+        Plugin.getInstance().getLogger().info("  on-start: " + (onStart != null));
+        Plugin.getInstance().getLogger().info("  on-cooking: " + (onCooking != null));
+        Plugin.getInstance().getLogger().info("  on-complete: " + (onComplete != null));
         return new FurnaceEffects(onStart, onCooking, onComplete, interval);
+    }
+    private static EffectConfig loadEffectConfig(ConfigurationSection parent, String key) {
+        if (!parent.contains(key)) {
+            Plugin.getInstance().getLogger().info("Section '" + key + "' is absent");
+            return null;
+        }
+        ConfigurationSection effectSection = parent.getConfigurationSection(key);
+        if (effectSection == null) {
+            Plugin.getInstance().getLogger().warning("Wasn't able to get section '" + key + "'");
+            return null;
+        }
+        Plugin.getInstance().getLogger().info("Loading effect '" + key + "'...");
+        ParticleConfig particle = null;
+        if (effectSection.contains("particle")) {
+            Plugin.getInstance().getLogger().info("Loading particle...");
+            particle = ParticleConfig.fromConfig(effectSection.getConfigurationSection("particle"));
+            if (particle != null) {
+                Plugin.getInstance().getLogger().info("Particle loaded: " + particle.getParticle());
+            } else {
+                Plugin.getInstance().getLogger().warning("Particle == null");
+            }
+        } else {
+            Plugin.getInstance().getLogger().info("Particle is missing");
+        }
+        SoundConfig sound = null;
+        if (effectSection.contains("sound")) {
+            Plugin.getInstance().getLogger().info("Loading sound...");
+            sound = SoundConfig.fromConfig(effectSection.getConfigurationSection("sound"));
+            if (sound != null) {
+                Plugin.getInstance().getLogger().info("Sound loaded: " + sound.getSound());
+            } else {
+                Plugin.getInstance().getLogger().warning("Sound == null");
+            }
+        } else {
+            Plugin.getInstance().getLogger().info("No sound is present");
+        }
+        if (particle != null || sound != null) {
+            Plugin.getInstance().getLogger().info("EffectConfig '" + key + "' created");
+            return new EffectConfig(particle, sound);
+        } else {
+            Plugin.getInstance().getLogger().warning("EffectConfig '" + key + "' empty");
+            return null;
+        }
     }
 }

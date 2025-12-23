@@ -5,9 +5,10 @@ import lombok.Getter;
 import me.FireKillGrib.iAInteractables.commands.MainCommand;
 import me.FireKillGrib.iAInteractables.listeners.FurnitureListener;
 import me.FireKillGrib.iAInteractables.managers.ConfigManager;
+import me.FireKillGrib.iAInteractables.managers.FurnaceDataManager;
+import me.FireKillGrib.iAInteractables.managers.FurnaceManager;
 import me.FireKillGrib.iAInteractables.managers.InstanceManager;
 import me.FireKillGrib.iAInteractables.managers.RecipeManager;
-
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 
@@ -20,6 +21,8 @@ public class Plugin extends JavaPlugin {
     private ConfigManager configManager;
     @Getter
     private InstanceManager instanceManager;
+    private FurnaceDataManager furnaceDataManager;
+    private FurnaceManager furnaceManager;
 
     @Override
     public void onEnable() {
@@ -35,13 +38,13 @@ public class Plugin extends JavaPlugin {
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             instanceManager.save();
         }, 6000L, 6000L);
+        furnaceDataManager = new FurnaceDataManager(getDataFolder());
+        furnaceManager = new FurnaceManager();
     }
 
     @Override
     public void onDisable() {
-        if (instanceManager != null) {
-            instanceManager.save();
-        }
+        furnaceManager.shutdown();
     }
     public void reload() {
         configManager.reload();
@@ -59,5 +62,11 @@ public class Plugin extends JavaPlugin {
             workbenchesFolder.mkdirs();
             saveResource("workbenches/default.yml", false);
         }
+    }
+    public FurnaceDataManager getFurnaceDataManager() {
+        return furnaceDataManager;
+    }
+    public FurnaceManager getFurnaceManager() {
+        return furnaceManager;
     }
 }

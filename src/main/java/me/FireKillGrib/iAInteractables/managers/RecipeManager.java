@@ -24,7 +24,7 @@ public class RecipeManager {
     for (File file : files) {
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         String name = file.getName().replace(".yml", "");
-        String title = cfg.getString("title", "&cНазвание не указано");
+        String title = cfg.getString("title", "&cName is not defined");
         List<String> structure = cfg.getStringList("structure");
         ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
         ItemProvider filler;
@@ -40,7 +40,7 @@ public class RecipeManager {
                     fillerItem = new ItemStack(Material.valueOf(materialStr.toUpperCase()));
                 } catch (IllegalArgumentException e) {
                     Plugin.getInstance().getLogger().warning(
-                        "Неизвестный материал '" + materialStr + "' в файле " + file.getName()
+                        "Unknown material '" + materialStr + "' in file " + file.getName()
                     );
                     fillerItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
                 }
@@ -81,8 +81,8 @@ public class RecipeManager {
                             }
                         } catch (IllegalArgumentException e) {
                             Plugin.getInstance().getLogger().warning(
-                                "Неизвестный материал результата '" + material + 
-                                "' в рецепте " + key + " файла " + file.getName()
+                                "Unknown result material '" + material + 
+                                "' in recept " + key + " file " + file.getName()
                             );
                         }
                     }
@@ -108,8 +108,8 @@ public class RecipeManager {
                                 }
                             } catch (IllegalArgumentException e) {
                                 Plugin.getInstance().getLogger().warning(
-                                    "Неизвестный материал '" + mat + 
-                                    "' в raws." + slotKey + " рецепта " + key + " файла " + file.getName()
+                                    "Unknown material '" + mat + 
+                                    "' in raws." + slotKey + " recept " + key + " file " + file.getName()
                                 );
                             }
                         }
@@ -136,8 +136,8 @@ public class RecipeManager {
                                 }
                             } catch (IllegalArgumentException e) {
                                 Plugin.getInstance().getLogger().warning(
-                                    "Неизвестный материал '" + mat + 
-                                    "' в fuels." + slotKey + " рецепта " + key + " файла " + file.getName()
+                                    "Unknown material '" + mat + 
+                                    "' in fuels." + slotKey + " recept " + key + " file " + file.getName()
                                 );
                             }
                         }
@@ -162,7 +162,7 @@ public class RecipeManager {
     for (File file : files) {
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         String name = file.getName().replace(".yml", "");
-        String title = cfg.getString("title", "&cНазвание не указано");
+        String title = cfg.getString("title", "&cName is not defined");
         List<String> structure = cfg.getStringList("structure");
         ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
         ItemProvider filler;
@@ -178,7 +178,7 @@ public class RecipeManager {
                     fillerItem = new ItemStack(Material.valueOf(materialStr.toUpperCase()));
                 } catch (IllegalArgumentException e) {
                     Plugin.getInstance().getLogger().warning(
-                        "Неизвестный материал '" + materialStr + "' в файле " + file.getName()
+                        "Unknown material '" + materialStr + "' in file " + file.getName()
                     );
                     fillerItem = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
                 }
@@ -217,8 +217,8 @@ public class RecipeManager {
                                 }
                             } catch (IllegalArgumentException e) {
                                 Plugin.getInstance().getLogger().warning(
-                                    "Неизвестный материал результата '" + material + 
-                                    "' в рецепте " + key + " файла " + file.getName()
+                                    "Unknown material result '" + material + 
+                                    "' in recept " + key + " file " + file.getName()
                                 );
                             }
                         }
@@ -245,8 +245,8 @@ public class RecipeManager {
                                         ingredients.put(slot, item);
                                     } catch (IllegalArgumentException e) {
                                         Plugin.getInstance().getLogger().warning(
-                                            "Неизвестный материал '" + material + 
-                                            "' в слоте " + slot + " рецепта " + key + " файла " + file.getName()
+                                            "Unknown material '" + material + 
+                                            "' in slot " + slot + " recept " + key + " file " + file.getName()
                                         );
                                     }
                                 }

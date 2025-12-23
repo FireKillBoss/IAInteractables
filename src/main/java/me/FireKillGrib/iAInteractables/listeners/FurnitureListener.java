@@ -7,6 +7,7 @@ import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
 import me.FireKillGrib.iAInteractables.data.FurnaceInstance;
 import me.FireKillGrib.iAInteractables.data.Workbench;
+import me.FireKillGrib.iAInteractables.managers.FurnaceController;
 import me.FireKillGrib.iAInteractables.menu.FurnaceGUI;
 import me.FireKillGrib.iAInteractables.menu.WorkbenchGUI;
 import org.bukkit.Location;
@@ -22,14 +23,14 @@ public class FurnitureListener implements Listener {
     @EventHandler
     public void onFurnitureInteract(FurnitureInteractEvent event) {
         Player player = event.getPlayer();
-        String furnitureId = event.getNamespacedID();
-        String name = furnitureId.contains(":") 
-            ? furnitureId.split(":")[1] 
-            : furnitureId;
+        String name = event.getNamespacedID().split(":")[1];
+        Location location = event.getBukkitEntity().getLocation();
         Furnace furnace = Plugin.getInstance().getRecipeManager().getFurnace(name);
         if (furnace != null) {
             event.setCancelled(true);
-            new FurnaceGUI(furnace, event.getBukkitEntity().getLocation()).open(player);
+            FurnaceController controller = Plugin.getInstance().getFurnaceManager()
+                .getOrCreate(furnace, location);
+            new FurnaceGUI(furnace, location, controller).open(player);
             return;
         }
         Workbench workbench = Plugin.getInstance().getRecipeManager().getWorkbench(name);
@@ -38,6 +39,7 @@ public class FurnitureListener implements Listener {
             new WorkbenchGUI(workbench).open(player);
         }
     }
+
     @EventHandler
     public void onFurnitureBreak(FurnitureBreakEvent event) {
         Entity entity = event.getBukkitEntity();

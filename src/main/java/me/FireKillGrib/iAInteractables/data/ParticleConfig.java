@@ -42,9 +42,9 @@ public class ParticleConfig {
         try {
             Particle particle = Particle.valueOf(particleName.toUpperCase());
             int count = section.getInt("count", 10);
-            double offsetX = section.getDouble("offset-x", 0.5);
+            double offsetX = section.getDouble("offset-x", 0);
             double offsetY = section.getDouble("offset-y", 0.5);
-            double offsetZ = section.getDouble("offset-z", 0.5);
+            double offsetZ = section.getDouble("offset-z", 0);
             double speed = section.getDouble("speed", 0.1);
             return new ParticleConfig(particle, count, offsetX, offsetY, offsetZ, speed);
         } catch (IllegalArgumentException e) {
