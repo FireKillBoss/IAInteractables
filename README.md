@@ -28,6 +28,7 @@ Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with Ite
 - Custom filler items
 - HEX colors support
 - Legacy color codes support
+- Progress bar details
 
 ## 📦 Requirements
 
@@ -63,6 +64,69 @@ filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
   lore: []
+
+progress-bar:
+  stages: 10  #There are 3 custom stages: 5, 10 and 20. You can delete everything in progress-bar and leave only stages: 5 because plugin has automatic preset for 5 stages, if you want 10 or 20 stages, then you will have to set up them yourself.
+  0:
+    material: RED_CONCRETE
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  1:
+    material: RED_TERRACOTTA
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  2:
+    material: ORANGE_TERRACOTTA
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  3:
+    material: YELLOW_TERRACOTTA
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  4:
+    material: YELLOW_CONCRETE
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  5:
+    material: LIME_TERRACOTTA
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  6:
+    material: LIME_CONCRETE
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  7:
+    material: EMERALD_BLOCK
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  8:
+    material: GREEN_TERRACOTTA
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
+  9:
+    material: GREEN_CONCRETE
+    name: "&cProgress: %progress%"
+    lore:
+      - "&7%ticks% / %total_ticks% ticks"
+      - "&7%seconds_left% seconds left"
 
 effects:
   cooking-interval: 20
@@ -117,6 +181,8 @@ recipes:
       B: [DEEPSLATE]
     fuels:
       U: [COAL]
+
+# All placeholders for progress-bar: %progress%, %ticks%, %total_ticks%, %seconds_left%
 ```
 
 ### Workbench Example (`workbenches/default.yml`)
