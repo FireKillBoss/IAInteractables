@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import xyz.xenondevs.invui.inventory.VirtualInventory;
 import java.util.*;
+import dev.lone.itemsadder.api.CustomStack;
 
 public class FurnaceController {
     private final Furnace furnace;
@@ -84,6 +85,18 @@ public class FurnaceController {
     public boolean isCooking() {
         return isCooking;
     }
+    private boolean itemsMatch(ItemStack item, ItemStack allowed) {
+        if (item == null || allowed == null) return false;
+        CustomStack customItem = CustomStack.byItemStack(item);
+        CustomStack customAllowed = CustomStack.byItemStack(allowed);
+        if (customItem != null && customAllowed != null) {
+            return customItem.getNamespacedID().equals(customAllowed.getNamespacedID());
+        } else if (customItem == null && customAllowed == null) {
+            return item.getType() == allowed.getType();
+        } else {
+            return false;
+        }
+    }
     private void checkAndStartCooking() {
         if (isCooking) return;
         Integer resultSlot = structure.get('R');
@@ -111,7 +124,7 @@ public class FurnaceController {
                 }
                 boolean itemMatches = false;
                 for (ItemStack allowed : allowedItems) {
-                    if (item.getType() == allowed.getType()) {
+                    if (itemsMatch(item, allowed)) {
                         itemMatches = true;
                         break;
                     }
@@ -138,7 +151,7 @@ public class FurnaceController {
                 }
                 boolean fuelMatches = false;
                 for (ItemStack allowed : allowedFuels) {
-                    if (item.getType() == allowed.getType()) {
+                    if (itemsMatch(item, allowed)) {
                         fuelMatches = true;
                         break;
                     }
@@ -154,6 +167,45 @@ public class FurnaceController {
                 return;
             }
         }
+    }
+    private boolean checkIngredientsPresent(FurnaceRecipe recipe, Map<Character, Integer> slots) {
+        for (Map.Entry<Character, Set<ItemStack>> rawEntry : recipe.getRaws().entrySet()) {
+            char slotChar = rawEntry.getKey();
+            Set<ItemStack> allowedItems = rawEntry.getValue();
+            Integer slotIndex = slots.get(slotChar);
+            if (slotIndex == null) return false;
+                ItemStack item = inventory.getItem(slotIndex);
+            if (item == null || item.getType() == Material.AIR) {
+                return false;
+            }
+            boolean matches = false;
+            for (ItemStack allowed : allowedItems) {
+                if (itemsMatch(item, allowed)) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) return false;
+        }
+        for (Map.Entry<Character, Set<ItemStack>> fuelEntry : recipe.getFuels().entrySet()) {
+            char slotChar = fuelEntry.getKey();
+            Set<ItemStack> allowedFuels = fuelEntry.getValue();
+            Integer slotIndex = slots.get(slotChar);
+            if (slotIndex == null) return false;
+                ItemStack item = inventory.getItem(slotIndex);
+            if (item == null || item.getType() == Material.AIR) {
+                return false;
+            }
+            boolean matches = false;
+            for (ItemStack allowed : allowedFuels) {
+                if (itemsMatch(item, allowed)) {
+                    matches = true;
+                    break;
+                }
+            }
+            if (!matches) return false;
+        }
+        return true;
     }
     private void startCooking(FurnaceRecipe recipe, Map<Character, Integer> slots) {
         if (isCooking) return;
@@ -293,45 +345,6 @@ public class FurnaceController {
                     "Error playing furnace effect at " + location + ": " + e.getMessage());
             }
         });
-    }
-    private boolean checkIngredientsPresent(FurnaceRecipe recipe, Map<Character, Integer> slots) {
-        for (Map.Entry<Character, Set<ItemStack>> rawEntry : recipe.getRaws().entrySet()) {
-            char slotChar = rawEntry.getKey();
-            Set<ItemStack> allowedItems = rawEntry.getValue();
-            Integer slotIndex = slots.get(slotChar);
-            if (slotIndex == null) return false;
-            ItemStack item = inventory.getItem(slotIndex);
-            if (item == null || item.getType() == Material.AIR) {
-                return false;
-            }
-            boolean matches = false;
-            for (ItemStack allowed : allowedItems) {
-                if (item.getType() == allowed.getType()) {
-                    matches = true;
-                    break;
-                }
-            }
-            if (!matches) return false;
-        }
-        for (Map.Entry<Character, Set<ItemStack>> fuelEntry : recipe.getFuels().entrySet()) {
-            char slotChar = fuelEntry.getKey();
-            Set<ItemStack> allowedFuels = fuelEntry.getValue();
-            Integer slotIndex = slots.get(slotChar);
-            if (slotIndex == null) return false;
-            ItemStack item = inventory.getItem(slotIndex);
-            if (item == null || item.getType() == Material.AIR) {
-                return false;
-            }
-            boolean matches = false;
-            for (ItemStack allowed : allowedFuels) {
-                if (item.getType() == allowed.getType()) {
-                    matches = true;
-                    break;
-                }
-            }
-            if (!matches) return false;
-        }
-        return true;
     }
     private void cancelCooking() {
         if (cookingTask != null) {
