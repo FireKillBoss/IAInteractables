@@ -82,14 +82,13 @@ public class RecipeManager {
                         } catch (IllegalArgumentException e) {
                             Plugin.getInstance().getLogger().warning(
                                 "Unknown result material '" + material + 
-                                "' in recept " + key + " file " + file.getName()
+                                "' in recipe " + key + " file " + file.getName()
                             );
                         }
                     }
                 }
                 if (result == null) continue;
                 Map<Character, Set<ItemStack>> raws = new HashMap<>();
-                Map<Character, Set<ItemStack>> fuels = new HashMap<>();
                 ConfigurationSection rawsSec = s.getConfigurationSection("raws");
                 if (rawsSec != null) {
                     for (String slotKey : rawsSec.getKeys(false)) {
@@ -109,7 +108,7 @@ public class RecipeManager {
                             } catch (IllegalArgumentException e) {
                                 Plugin.getInstance().getLogger().warning(
                                     "Unknown material '" + mat + 
-                                    "' in raws." + slotKey + " recept " + key + " file " + file.getName()
+                                    "' in raws." + slotKey + " recipe " + key + " file " + file.getName()
                                 );
                             }
                         }
@@ -118,6 +117,7 @@ public class RecipeManager {
                         }
                     }
                 }
+                Map<Character, Set<ItemStack>> fuels = new HashMap<>();
                 ConfigurationSection fuelsSec = s.getConfigurationSection("fuels");
                 if (fuelsSec != null) {
                     for (String slotKey : fuelsSec.getKeys(false)) {
@@ -137,7 +137,7 @@ public class RecipeManager {
                             } catch (IllegalArgumentException e) {
                                 Plugin.getInstance().getLogger().warning(
                                     "Unknown material '" + mat + 
-                                    "' in fuels." + slotKey + " recept " + key + " file " + file.getName()
+                                    "' in fuels." + slotKey + " recipe " + key + " file " + file.getName()
                                 );
                             }
                         }
@@ -150,7 +150,8 @@ public class RecipeManager {
             }
         }
             FurnaceEffects effects = FurnaceEffects.fromConfig(cfg.getConfigurationSection("effects"));
-            furnaces.add(new Furnace(name, title, structure, filler, recipes, effects));
+            ProgressBarConfig progressBar = ProgressBarConfig.fromConfig(cfg.getConfigurationSection("progress-bar"));
+            furnaces.add(new Furnace(name, title, structure, filler, recipes, effects, progressBar));
         }
     }
     public void loadWorkbenches() {

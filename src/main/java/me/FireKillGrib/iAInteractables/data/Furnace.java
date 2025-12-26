@@ -16,4 +16,5 @@ public class Furnace {
     private final ItemProvider filler;
     private final Set<FurnaceRecipe> recipes;
     private final FurnaceEffects effects;
+    private final ProgressBarConfig progressBar;
 }

@@ -1,36 +1,35 @@
 package me.FireKillGrib.iAInteractables.listeners;
 
-import dev.lone.itemsadder.api.CustomFurniture;
 import dev.lone.itemsadder.api.Events.FurnitureBreakEvent;
 import dev.lone.itemsadder.api.Events.FurnitureInteractEvent;
 import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
-import me.FireKillGrib.iAInteractables.data.FurnaceInstance;
 import me.FireKillGrib.iAInteractables.data.Workbench;
 import me.FireKillGrib.iAInteractables.managers.FurnaceController;
 import me.FireKillGrib.iAInteractables.menu.FurnaceGUI;
 import me.FireKillGrib.iAInteractables.menu.WorkbenchGUI;
 import org.bukkit.Location;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Entity;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import java.io.File;
+import org.bukkit.inventory.ItemStack;
+import xyz.xenondevs.invui.inventory.VirtualInventory;
 
 public class FurnitureListener implements Listener {
-
+    
     @EventHandler
     public void onFurnitureInteract(FurnitureInteractEvent event) {
         Player player = event.getPlayer();
         String name = event.getNamespacedID().split(":")[1];
-        Location location = event.getBukkitEntity().getLocation();
+        Location entityLocation = event.getBukkitEntity().getLocation();
+        Location blockLocation = entityLocation.getBlock().getLocation();
         Furnace furnace = Plugin.getInstance().getRecipeManager().getFurnace(name);
         if (furnace != null) {
             event.setCancelled(true);
             FurnaceController controller = Plugin.getInstance().getFurnaceManager()
-                .getOrCreate(furnace, location);
-            new FurnaceGUI(furnace, location, controller).open(player);
+                .getOrCreate(furnace, blockLocation);
+            new FurnaceGUI(furnace, blockLocation, controller).open(player);
             return;
         }
         Workbench workbench = Plugin.getInstance().getRecipeManager().getWorkbench(name);
@@ -42,38 +41,28 @@ public class FurnitureListener implements Listener {
 
     @EventHandler
     public void onFurnitureBreak(FurnitureBreakEvent event) {
-        Entity entity = event.getBukkitEntity();
-        CustomFurniture furniture = CustomFurniture.byAlreadySpawned(entity);
-        if (furniture == null) return;
-        String furnitureId = furniture.getNamespacedID();
-        Location loc = entity.getLocation();
-        String furnaceType = getTypeByFurniture(furnitureId, "furnaces");
-        if (furnaceType != null) {
-            FurnaceInstance instance = Plugin.getInstance().getInstanceManager()
-                    .getFurnaceInstance(loc, furnaceType);
-            for (org.bukkit.inventory.ItemStack item : instance.getSlots().values()) {
-                if (item != null && !item.getType().isAir()) {
-                    loc.getWorld().dropItemNaturally(loc, item);
+        String name = event.getNamespacedID().split(":")[1];
+        Furnace furnace = Plugin.getInstance().getRecipeManager().getFurnace(name);
+        if (furnace != null) {
+            Location entityLocation = event.getBukkitEntity().getLocation();
+            Location blockLocation = entityLocation.getBlock().getLocation();
+            FurnaceController controller = Plugin.getInstance()
+                .getFurnaceManager()
+                .get(blockLocation);
+            if (controller != null) {
+                VirtualInventory inventory = controller.getInventory();
+                for (int i = 0; i < inventory.getSize(); i++) {
+                    ItemStack item = inventory.getItem(i);
+                    if (item != null && item.getType() != Material.AIR) {
+                        blockLocation.getWorld().dropItemNaturally(
+                            blockLocation.clone().add(0.5, 0.5, 0.5), 
+                            item
+                        );
+                    }
                 }
+                Plugin.getInstance().getFurnaceManager().remove(blockLocation);
             }
-            if (instance.getResult() != null) {
-                loc.getWorld().dropItemNaturally(loc, instance.getResult());
-            }
-            Plugin.getInstance().getInstanceManager().removeInstance(loc);
+            Plugin.getInstance().getFurnaceDataManager().delete(blockLocation);
         }
-    }
-    private String getTypeByFurniture(String furnitureId, String folder) {
-        File dir = new File(Plugin.getInstance().getDataFolder(), folder);
-        if (!dir.exists()) return null;
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".yml"));
-        if (files == null) return null;
-        for (File file : files) {
-            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-            String configFurnitureId = cfg.getString("itemsadder-furniture");
-            if (furnitureId.equals(configFurnitureId)) {
-                return file.getName().replace(".yml", "");
-            }
-        }
-        return null;
     }
 }

@@ -6,26 +6,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FurnaceManager {
-    private final Map<String, FurnaceController> activeControllers = new HashMap<>();
+    private final Map<String, FurnaceController> controllers = new HashMap<>();
     public FurnaceController getOrCreate(Furnace furnace, Location location) {
-        String key = locationToKey(location);
-        return activeControllers.computeIfAbsent(key, k -> new FurnaceController(furnace, location));
+        String key = locationToString(location);
+        return controllers.computeIfAbsent(key, k -> new FurnaceController(furnace, location));
+    }
+    public FurnaceController get(Location location) {
+        String key = locationToString(location);
+        return controllers.get(key);
     }
     public void remove(Location location) {
-        String key = locationToKey(location);
-        FurnaceController controller = activeControllers.remove(key);
+        String key = locationToString(location);
+        FurnaceController controller = controllers.remove(key);
         if (controller != null) {
             controller.shutdown();
         }
     }
     public void shutdown() {
-        activeControllers.values().forEach(FurnaceController::shutdown);
-        activeControllers.clear();
+        for (FurnaceController controller : controllers.values()) {
+            controller.shutdown();
+        }
+        controllers.clear();
     }
-    private String locationToKey(Location loc) {
+    private String locationToString(Location loc) {
         return loc.getWorld().getName() + "_" + 
-            loc.getBlockX() + "_" + 
-            loc.getBlockY() + "_" + 
-            loc.getBlockZ();
+                loc.getBlockX() + "_" + 
+                loc.getBlockY() + "_" + 
+                loc.getBlockZ();
     }
 }

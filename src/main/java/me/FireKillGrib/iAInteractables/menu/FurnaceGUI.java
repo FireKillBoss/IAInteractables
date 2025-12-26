@@ -5,12 +5,11 @@ import me.FireKillGrib.iAInteractables.data.*;
 import me.FireKillGrib.iAInteractables.managers.FurnaceController;
 import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import xyz.xenondevs.inventoryaccess.component.AdventureComponentWrapper;
 import xyz.xenondevs.invui.gui.Gui;
-import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
 import xyz.xenondevs.invui.window.Window;
 import java.util.*;
@@ -51,8 +50,7 @@ public class FurnaceGUI {
                         guiBuilder.addIngredient('X', furnace.getFiller());
                     } else if (c == 'P') {
                         guiBuilder.addIngredient('P', new SimpleItem(
-                            new ItemBuilder(Material.GRAY_STAINED_GLASS_PANE)
-                                .setDisplayName("§7Waiting...")
+                            furnace.getProgressBar().getItemForProgress(0)
                         ));
                     } else {
                         Integer inventorySlot = structure.get(c);
@@ -70,33 +68,28 @@ public class FurnaceGUI {
     private void startProgressUpdater() {
         updateTask = Plugin.getInstance().getServer().getScheduler()
             .runTaskTimer(Plugin.getInstance(), () -> {
-                if (controller.isCooking()) {
-                    updateProgressBar();
-                }
+                updateProgressBar();
             }, 0L, 1L);
     }
     private void updateProgressBar() {
-        if (!controller.isCooking()) return;
-        FurnaceRecipe recipe = controller.getCurrentRecipe();
-        if (recipe == null) return;
-        int cookingProgress = controller.getCookingProgress();
-        int totalTime = recipe.getCookTimeTicks();
-        int percentage = (int) ((float) cookingProgress / totalTime * 100);
-        Material barMaterial;
-        if (percentage < 20)  barMaterial = Material.RED_STAINED_GLASS_PANE;
-        else if (percentage < 40)  barMaterial = Material.ORANGE_STAINED_GLASS_PANE;
-        else if (percentage < 60)  barMaterial = Material.YELLOW_STAINED_GLASS_PANE;
-        else if (percentage < 80)  barMaterial = Material.LIME_STAINED_GLASS_PANE;
-        else barMaterial = Material.GREEN_STAINED_GLASS_PANE;
         Integer progressSlot = findProgressSlot();
         if (progressSlot == null) return;
-        ItemBuilder builder = new ItemBuilder(barMaterial)
-            .setDisplayName("§eProgress: §6" + percentage + "%")
-            .addLoreLines(
-                "§7" + cookingProgress + " §8/§7 " + totalTime + " ticks",
-                "§7" + (totalTime - cookingProgress) / 20 + " seconds left"
-            );
-        gui.setItem(progressSlot, new SimpleItem(builder));
+        if (!controller.isCooking()) {
+            ItemStack progressItem = furnace.getProgressBar().getItemForProgress(0);
+            gui.setItem(progressSlot, new SimpleItem(progressItem));
+            return;
+        }
+        FurnaceRecipe recipe = controller.getCurrentRecipe();
+        if (recipe == null) return;
+        int percentage = controller.getProgressPercentage();
+        int currentTicks = controller.getCookingProgress();
+        int totalTicks = recipe.getCookTimeTicks();
+        ItemStack progressItem = furnace.getProgressBar().getItemForProgress(
+            percentage, 
+            currentTicks, 
+            totalTicks
+        );
+        gui.setItem(progressSlot, new SimpleItem(progressItem));
     }
     private Integer findProgressSlot() {
         int index = 0;

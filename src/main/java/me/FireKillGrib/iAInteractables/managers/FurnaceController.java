@@ -234,33 +234,68 @@ public class FurnaceController {
             cookingTask = null;
         }
         isCooking = false;
-        for (Map.Entry<Character, Integer> entry : slots.entrySet()) {
-            int inventorySlot = entry.getValue();
-            ItemStack item = inventory.getItem(inventorySlot);
-            if (item != null && item.getAmount() > 0) {
-                item.setAmount(item.getAmount() - 1);
-                if (item.getAmount() == 0) {
-                    inventory.setItem(null, inventorySlot, null);
+        final Integer resultSlot = structure.get('R');
+        if (resultSlot != null) {
+            ItemStack result = recipe.getResult().clone();
+            ItemStack existingResult = inventory.getItem(resultSlot);
+            if (existingResult != null && existingResult.getType() != Material.AIR) {
+                if (!itemsMatch(existingResult, result)) {
+                    cancelCooking();
+                    return;
+                }
+                if (existingResult.getAmount() + result.getAmount() > result.getMaxStackSize()) {
+                    cancelCooking();
+                    return;
                 }
             }
         }
         Bukkit.getScheduler().runTask(Plugin.getInstance(), () -> {
-            Integer resultSlot = structure.get('R');
+            for (Map.Entry<Character, Set<ItemStack>> rawEntry : recipe.getRaws().entrySet()) {
+                char slotChar = rawEntry.getKey();
+                Integer slotIndex = structure.get(slotChar);
+                if (slotIndex != null) {
+                    ItemStack item = inventory.getItem(slotIndex);
+                    if (item != null && item.getAmount() > 0) {
+                        int newAmount = item.getAmount() - 1;
+                        if (newAmount <= 0) {
+                            inventory.setItem(null, slotIndex, null);
+                        } else {
+                            item.setAmount(newAmount);
+                            inventory.setItem(null, slotIndex, item);
+                        }
+                    }
+                }
+            }
+            for (Map.Entry<Character, Set<ItemStack>> fuelEntry : recipe.getFuels().entrySet()) {
+                char slotChar = fuelEntry.getKey();
+                Integer slotIndex = structure.get(slotChar);
+                if (slotIndex != null) {
+                    ItemStack item = inventory.getItem(slotIndex);
+                    if (item != null && item.getAmount() > 0) {
+                        int newAmount = item.getAmount() - 1;
+                        if (newAmount <= 0) {
+                            inventory.setItem(null, slotIndex, null);
+                        } else {
+                            item.setAmount(newAmount);
+                            inventory.setItem(null, slotIndex, item);
+                        }
+                    }
+                }
+            }
             if (resultSlot != null) {
                 ItemStack result = recipe.getResult().clone();
                 ItemStack existingResult = inventory.getItem(resultSlot);
                 if (existingResult == null || existingResult.getType() == Material.AIR) {
                     inventory.setItem(null, resultSlot, result);
-                } else if (existingResult.isSimilar(result) && 
-                        existingResult.getAmount() + result.getAmount() <= result.getMaxStackSize()) {
-                    existingResult.setAmount(existingResult.getAmount() + result.getAmount());
                 } else {
-                    restoreIngredients(slots);
-                    return;
+                    existingResult.setAmount(existingResult.getAmount() + result.getAmount());
+                    inventory.setItem(null, resultSlot, existingResult);
                 }
             }
             playCompleteEffects();
             cookingProgress = 0;
+            Plugin.getInstance().getFurnaceDataManager()
+                .save(location, inventory, cookingProgress);
             checkAndStartCooking();
         });
     }
@@ -287,11 +322,6 @@ public class FurnaceController {
     }
     private void playEffect(FurnaceEffects.EffectConfig effect) {
         if (effect == null) return;
-        if (location.getWorld() == null) {
-            Plugin.getInstance().getLogger().severe(
-                "Cannot play effect: world not loaded at " + location);
-            return;
-        }
         if (!location.getChunk().isLoaded()) {
             location.getChunk().load();
         }
