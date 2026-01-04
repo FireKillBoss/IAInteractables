@@ -2,7 +2,7 @@ package me.FireKillGrib.iAInteractables.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import me.FireKillGrib.iAInteractables.Plugin;
+import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 
 @AllArgsConstructor
@@ -12,12 +12,20 @@ public class FurnaceEffects {
     private final EffectConfig onCooking;
     private final EffectConfig onComplete;
     private final int cookingInterval;
-    
+
     @AllArgsConstructor
     @Getter
     public static class EffectConfig {
         private final ParticleConfig particle;
         private final SoundConfig sound;
+        public void play(Location location) {
+            if (sound != null) {
+                sound.play(location);
+            }
+            if (particle != null) {
+                particle.spawn(location);
+            }
+        }
     }
     public static FurnaceEffects fromConfig(ConfigurationSection section) {
         if (section == null) return null;
@@ -26,8 +34,6 @@ public class FurnaceEffects {
         EffectConfig onCooking = loadEffectConfig(section, "on-cooking");
         EffectConfig onComplete = loadEffectConfig(section, "on-complete");
         if (onStart == null && onCooking == null && onComplete == null) {
-            Plugin.getInstance().getLogger().warning(
-                "No effects configured for furnace (all effect sections are empty)");
             return null;
         }
         return new FurnaceEffects(onStart, onCooking, onComplete, interval);

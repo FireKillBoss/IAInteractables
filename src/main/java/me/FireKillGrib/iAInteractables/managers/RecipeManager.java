@@ -198,66 +198,57 @@ public class RecipeManager {
                 .getItemProvider();
             }
             Set<WorkbenchRecipe> recipes = new HashSet<>();
-            ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
-            if (recipesSec != null) {
-                for (String key : recipesSec.getKeys(false)) {
-                    ConfigurationSection s = recipesSec.getConfigurationSection(key);
-                    if (s == null) continue;
-                    ConfigurationSection resultSec = s.getConfigurationSection("result");
-                    ItemStack result = null;
-                    if (resultSec != null) {
-                        String material = resultSec.getString("material");
-                        int amount = resultSec.getInt("amount", 1);
+        ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
+        if (recipesSec != null) {
+            for (String key : recipesSec.getKeys(false)) {
+                ConfigurationSection s = recipesSec.getConfigurationSection(key);
+                if (s == null) continue;
+                ConfigurationSection resultSec = s.getConfigurationSection("result");
+                ItemStack result = null;
+                if (resultSec != null) {
+                    String material = resultSec.getString("material");
+                    int amount = resultSec.getInt("amount", 1);
+                    if (material != null) {
+                        try {
+                            if (material.startsWith("ia-") || material.contains(":")) {
+                                result = new ItemsBuilder(material).build();
+                                result.setAmount(amount);
+                            } else {
+                                result = new ItemStack(Material.valueOf(material.toUpperCase()), amount);
+                            }
+                        } catch (IllegalArgumentException e) {
+                            Plugin.getInstance().getLogger().warning("Error parsing result in " + file.getName());
+                        }
+                    }
+                }
+                if (result == null) continue;
+                Map<Character, ItemStack> ingredients = new HashMap<>();
+                for (String slotKey : s.getKeys(false)) {
+                    if (slotKey.equals("result")) continue;
+                    char charKey = slotKey.charAt(0);
+                    ConfigurationSection ingredientSec = s.getConfigurationSection(slotKey);
+                    if (ingredientSec != null) {
+                        String material = ingredientSec.getString("material");
+                        int amount = ingredientSec.getInt("amount", 1);
                         if (material != null) {
                             try {
+                                ItemStack item;
                                 if (material.startsWith("ia-") || material.contains(":")) {
-                                    result = new ItemsBuilder(material).build();
-                                    result.setAmount(amount);
+                                    item = new ItemsBuilder(material).build();
                                 } else {
-                                    result = new ItemStack(Material.valueOf(material.toUpperCase()), amount);
+                                    item = new ItemStack(Material.valueOf(material.toUpperCase()));
                                 }
+                                item.setAmount(amount);
+                                ingredients.put(charKey, item);
                             } catch (IllegalArgumentException e) {
-                                Plugin.getInstance().getLogger().warning(
-                                    "Unknown material result '" + material + 
-                                    "' in recept " + key + " file " + file.getName()
-                                );
+                                Plugin.getInstance().getLogger().warning("Error parsing ingredient " + slotKey);
                             }
                         }
                     }
-                    if (result == null) continue;
-                    Map<Integer, ItemStack> ingredients = new HashMap<>();
-                    for (String slotKey : s.getKeys(false)) {
-                        if (slotKey.equals("result")) continue;
-                        try {
-                            int slot = Integer.parseInt(slotKey);
-                            ConfigurationSection ingredientSec = s.getConfigurationSection(slotKey);
-                            if (ingredientSec != null) {
-                                String material = ingredientSec.getString("material");
-                                int amount = ingredientSec.getInt("amount", 1);
-                                if (material != null) {
-                                    try {
-                                        ItemStack item;
-                                        if (material.startsWith("ia-") || material.contains(":")) {
-                                            item = new ItemsBuilder(material).build();
-                                        } else {
-                                            item = new ItemStack(Material.valueOf(material.toUpperCase()));
-                                        }
-                                        item.setAmount(amount);
-                                        ingredients.put(slot, item);
-                                    } catch (IllegalArgumentException e) {
-                                        Plugin.getInstance().getLogger().warning(
-                                            "Unknown material '" + material + 
-                                            "' in slot " + slot + " recept " + key + " file " + file.getName()
-                                        );
-                                    }
-                                }
-                            }
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-                    recipes.add(new WorkbenchRecipe(result, ingredients));
                 }
+                recipes.add(new WorkbenchRecipe(result, ingredients));
             }
+        }
             WorkbenchEffects effects = WorkbenchEffects.fromConfig(cfg.getConfigurationSection("effects"));
             workbenches.add(new Workbench(name, title, structure, filler, recipes, effects));
         }

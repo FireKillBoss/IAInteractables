@@ -16,14 +16,12 @@ import java.util.*;
 
 public class FurnaceGUI {
     private final Furnace furnace;
-    private final Location location;
     private final FurnaceController controller;
     private Window window;
     private Gui gui;
     private BukkitTask updateTask;
     public FurnaceGUI(Furnace furnace, Location location, FurnaceController controller) {
         this.furnace = furnace;
-        this.location = location;
         this.controller = controller;
     }
     public void open(Player player) {

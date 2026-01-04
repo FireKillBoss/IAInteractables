@@ -4,25 +4,17 @@ import co.aikar.commands.PaperCommandManager;
 import lombok.Getter;
 import me.FireKillGrib.iAInteractables.commands.MainCommand;
 import me.FireKillGrib.iAInteractables.listeners.FurnitureListener;
-import me.FireKillGrib.iAInteractables.managers.ConfigManager;
-import me.FireKillGrib.iAInteractables.managers.FurnaceDataManager;
-import me.FireKillGrib.iAInteractables.managers.FurnaceManager;
-import me.FireKillGrib.iAInteractables.managers.InstanceManager;
-import me.FireKillGrib.iAInteractables.managers.RecipeManager;
+import me.FireKillGrib.iAInteractables.managers.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 
 public class Plugin extends JavaPlugin {
-    @Getter
-    private static Plugin instance;
-    @Getter
-    private RecipeManager recipeManager;
-    @Getter
-    private ConfigManager configManager;
-    @Getter
-    private InstanceManager instanceManager;
-    private FurnaceDataManager furnaceDataManager;
-    private FurnaceManager furnaceManager;
+    @Getter private static Plugin instance;
+    @Getter private RecipeManager recipeManager;
+    @Getter private ConfigManager configManager;
+    @Getter private InstanceManager instanceManager;
+    @Getter private FurnaceDataManager furnaceDataManager;
+    @Getter private FurnaceManager furnaceManager;
 
     @Override
     public void onEnable() {
@@ -32,24 +24,30 @@ public class Plugin extends JavaPlugin {
         configManager = new ConfigManager();
         recipeManager = new RecipeManager();
         instanceManager = new InstanceManager();
+        furnaceDataManager = new FurnaceDataManager(getDataFolder());
+        furnaceManager = new FurnaceManager();
         PaperCommandManager manager = new PaperCommandManager(this);
         manager.registerCommand(new MainCommand());
         getServer().getPluginManager().registerEvents(new FurnitureListener(), this);
+        reload(); 
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
-            instanceManager.save();
+            furnaceManager.saveAll();
         }, 6000L, 6000L);
-        furnaceDataManager = new FurnaceDataManager(getDataFolder());
-        furnaceManager = new FurnaceManager();
     }
 
     @Override
     public void onDisable() {
-        furnaceManager.shutdown();
+        if (furnaceManager != null) {
+            furnaceManager.shutdown();
+        }
     }
     public void reload() {
-        configManager.reload();
-        recipeManager.loadWorkbenches();
-        recipeManager.loadFurnaces();
+        if (configManager != null) configManager.reload();
+        if (recipeManager != null) {
+            recipeManager.clearAll();
+            recipeManager.loadFurnaces();
+            recipeManager.loadWorkbenches();
+        }
     }
     private void createDefaultConfigs() {
         File furnacesFolder = new File(getDataFolder(), "furnaces");
@@ -62,11 +60,5 @@ public class Plugin extends JavaPlugin {
             workbenchesFolder.mkdirs();
             saveResource("workbenches/default.yml", false);
         }
-    }
-    public FurnaceDataManager getFurnaceDataManager() {
-        return furnaceDataManager;
-    }
-    public FurnaceManager getFurnaceManager() {
-        return furnaceManager;
     }
 }

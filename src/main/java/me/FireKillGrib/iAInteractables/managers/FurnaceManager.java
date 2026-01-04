@@ -1,5 +1,6 @@
 package me.FireKillGrib.iAInteractables.managers;
 
+import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
 import org.bukkit.Location;
 import java.util.HashMap;
@@ -34,4 +35,13 @@ public class FurnaceManager {
                 loc.getBlockY() + "_" + 
                 loc.getBlockZ();
     }
+    public void saveAll() {
+    for (FurnaceController controller : controllers.values()) {
+        Plugin.getInstance().getFurnaceDataManager().saveAsync(
+            controller.getLocation(),
+            controller.getInventory(), 
+            controller.getCookingProgress()
+        );
+    }
+}
 }
