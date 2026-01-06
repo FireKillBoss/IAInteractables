@@ -61,8 +61,13 @@ structure:
   - "X X X X X X X X X"
   - "X A B X P X R X X"
   - "X X U X X X X X X"
-  - "X X X X X X X X X"
-
+  - "X X X X X X X X Z"
+# X - filler
+# A,B,C... - slots
+# U - fuels
+# P - progress bar
+# R - result
+# Z - back button for recipe book
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
@@ -198,8 +203,11 @@ structure:
   - "X X O X X X X X X"
   - "X O O O X X X R X"
   - "X X O X X X X X X"
-  - "O X X X O X X X X"
-
+  - "O X X X O X X X Z"
+# X - filler
+# O - slots
+# R - result slot
+# Z - back button for recipe book
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
