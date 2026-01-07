@@ -4,6 +4,7 @@ import co.aikar.commands.PaperCommandManager;
 import lombok.Getter;
 import me.FireKillGrib.iAInteractables.commands.MainCommand;
 import me.FireKillGrib.iAInteractables.listeners.FurnitureListener;
+import me.FireKillGrib.iAInteractables.listeners.RecipeBookListener;
 import me.FireKillGrib.iAInteractables.managers.*;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
@@ -29,7 +30,8 @@ public class Plugin extends JavaPlugin {
         PaperCommandManager manager = new PaperCommandManager(this);
         manager.registerCommand(new MainCommand());
         getServer().getPluginManager().registerEvents(new FurnitureListener(), this);
-        reload(); 
+        reload();
+        getServer().getPluginManager().registerEvents(new RecipeBookListener(), this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             furnaceManager.saveAll();
         }, 6000L, 6000L);
@@ -42,6 +44,7 @@ public class Plugin extends JavaPlugin {
         }
     }
     public void reload() {
+        reloadConfig();
         if (configManager != null) configManager.reload();
         if (recipeManager != null) {
             recipeManager.clearAll();

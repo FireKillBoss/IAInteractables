@@ -1,4 +1,12 @@
-no-perm: "&cНет прав!"
-reload: "&aКонфиги успешно перезагружены"
+no-perm: "&cNo rights!"
+reload: "&aConfigs succesfully reloaded!"
 usages:
-  - "&f/iai reload <name> - перезагрузить конфиги"
+  - "&f/iai reload <name> - reload configs"
+recipe-book:
+  enabled: true
+  item: "KNOWLEDGE_BOOK"
+  name: "&6Recipe book"
+  gui-title: "&8Recipe book"
+  hidden-stations:
+    - "secret_workbench"
+    - "admin_furnace"
