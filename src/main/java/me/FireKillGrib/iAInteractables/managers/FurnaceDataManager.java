@@ -12,10 +12,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FurnaceDataManager {
-    private final File dataFolder;
+    private final File storageFolder;
     public FurnaceDataManager(File dataFolder) {
-        this.dataFolder = dataFolder;
-        new File(dataFolder, "furnaces").mkdirs();
+        this.storageFolder = new File(dataFolder, "data/furnaces");
+        if (!this.storageFolder.exists()) {
+            this.storageFolder.mkdirs();
+        }
     }
     public void saveAsync(Location location, VirtualInventory inventory, int cookingProgress) {
         Bukkit.getScheduler().runTaskAsynchronously(Plugin.getInstance(), () -> {
@@ -23,7 +25,7 @@ public class FurnaceDataManager {
         });
     }
     public void saveSync(Location location, VirtualInventory inventory, int cookingProgress) {
-        File file = new File(dataFolder, "furnaces/" + locationToString(location) + ".yml");
+        File file = new File(storageFolder, locationToString(location) + ".yml");
         YamlConfiguration config = new YamlConfiguration();
         for (int i = 0; i < inventory.getSize(); i++) {
             ItemStack item = inventory.getItem(i);
@@ -39,7 +41,7 @@ public class FurnaceDataManager {
         }
     }
     public Map<String, Object> load(Location location) {
-        File file = new File(dataFolder, "furnaces/" + locationToString(location) + ".yml");
+        File file = new File(storageFolder, locationToString(location) + ".yml");
         if (!file.exists()) {
             return null;
         }
@@ -56,7 +58,7 @@ public class FurnaceDataManager {
         return data;
     }
     public void delete(Location location) {
-        File file = new File(dataFolder, "furnaces/" + locationToString(location) + ".yml");
+        File file = new File(storageFolder, locationToString(location) + ".yml");
         if (file.exists()) file.delete();
     }
     private String locationToString(Location loc) {

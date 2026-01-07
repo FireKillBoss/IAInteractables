@@ -1,5 +1,6 @@
 package me.FireKillGrib.iAInteractables.menu.recipebook;
 
+import dev.lone.itemsadder.api.CustomStack;
 import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
 import me.FireKillGrib.iAInteractables.data.Workbench;
@@ -7,6 +8,7 @@ import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import xyz.xenondevs.inventoryaccess.component.AdventureComponentWrapper;
 import xyz.xenondevs.invui.gui.Gui;
 import xyz.xenondevs.invui.gui.PagedGui;
@@ -24,7 +26,13 @@ public class StationListGUI {
         LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
         for (Workbench wb : Plugin.getInstance().getRecipeManager().getWorkbenches()) {
             if (hidden.contains(wb.getName())) continue;
-            ItemBuilder iconBuilder = new ItemBuilder(Material.CRAFTING_TABLE)
+            ItemStack iconStack;
+            if (wb.getNamespacedID() != null && CustomStack.getInstance(wb.getNamespacedID()) != null) {
+                iconStack = CustomStack.getInstance(wb.getNamespacedID()).getItemStack();
+            } else {
+                iconStack = new ItemStack(Material.CRAFTING_TABLE);
+            }
+            ItemBuilder iconBuilder = new ItemBuilder(iconStack)
                     .setDisplayName(serializer.serialize(ChatUtil.color("&e" + wb.getTitle())))
                     .addLoreLines(
                         serializer.serialize(ChatUtil.color("&7Click to see recipies")),
@@ -36,7 +44,13 @@ public class StationListGUI {
         }
         for (Furnace fn : Plugin.getInstance().getRecipeManager().getFurnaces()) {
             if (hidden.contains(fn.getName())) continue;
-            ItemBuilder iconBuilder = new ItemBuilder(Material.FURNACE)
+            ItemStack iconStack;
+            if (fn.getNamespacedID() != null && CustomStack.getInstance(fn.getNamespacedID()) != null) {
+                iconStack = CustomStack.getInstance(fn.getNamespacedID()).getItemStack();
+            } else {
+                iconStack = new ItemStack(Material.FURNACE);
+            }
+            ItemBuilder iconBuilder = new ItemBuilder(iconStack)
                     .setDisplayName(serializer.serialize(ChatUtil.color("&e" + fn.getTitle())))
                     .addLoreLines(
                         serializer.serialize(ChatUtil.color("&7Click to see recipies")),

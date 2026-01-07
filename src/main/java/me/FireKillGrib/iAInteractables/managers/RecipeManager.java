@@ -25,6 +25,7 @@ public class RecipeManager {
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         String name = file.getName().replace(".yml", "");
         String title = cfg.getString("title", "&cName is not defined");
+        String iaFurniture = cfg.getString("itemsadder-furniture"); 
         List<String> structure = cfg.getStringList("structure");
         ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
         ItemProvider filler;
@@ -151,7 +152,7 @@ public class RecipeManager {
         }
             FurnaceEffects effects = FurnaceEffects.fromConfig(cfg.getConfigurationSection("effects"));
             ProgressBarConfig progressBar = ProgressBarConfig.fromConfig(cfg.getConfigurationSection("progress-bar"));
-            furnaces.add(new Furnace(name, title, structure, filler, recipes, effects, progressBar));
+            furnaces.add(new Furnace(name, title, iaFurniture, structure, filler, recipes, effects, progressBar));
         }
     }
     public void loadWorkbenches() {
@@ -164,6 +165,7 @@ public class RecipeManager {
         YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
         String name = file.getName().replace(".yml", "");
         String title = cfg.getString("title", "&cName is not defined");
+        String iaFurniture = cfg.getString("itemsadder-furniture");
         List<String> structure = cfg.getStringList("structure");
         ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
         ItemProvider filler;
@@ -250,7 +252,7 @@ public class RecipeManager {
             }
         }
             WorkbenchEffects effects = WorkbenchEffects.fromConfig(cfg.getConfigurationSection("effects"));
-            workbenches.add(new Workbench(name, title, structure, filler, recipes, effects));
+            workbenches.add(new Workbench(name, title, iaFurniture, structure, filler, recipes, effects));
         }
     }
     public List<Furnace> getFurnaces() {

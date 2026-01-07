@@ -12,6 +12,7 @@ import java.util.Set;
 public class Furnace {
     private final String name;
     private final String title;
+    private final String namespacedID; 
     private final List<String> structure;
     private final ItemProvider filler;
     private final Set<FurnaceRecipe> recipes;
