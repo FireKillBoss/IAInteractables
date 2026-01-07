@@ -5,8 +5,11 @@ structure:
   - "X X O X X X X X X"
   - "X O O O X X X R X"
   - "X X O X X X X X X"
-  - "O X X X O X X X X"
-
+  - "O X X X O X X X Z"
+# X - filler
+# O - slots
+# R - result slot
+# Z - back button for recipe book
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
