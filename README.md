@@ -22,13 +22,16 @@ Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with Ite
 ### 🔨 Custom Workbenches
 - Flexible slot layout
 - Drag & drop crafting
-
+- Particle effects
+- Sound effects
+  
 ### 🎨 Advanced Customization
 - Custom GUI structure and size (up to 54 slots)
 - Custom filler items
 - HEX colors support
 - Legacy color codes support
 - Progress bar details
+- Recipe book for furnaces and workbenches
 
 ## 📦 Requirements
 
@@ -58,8 +61,13 @@ structure:
   - "X X X X X X X X X"
   - "X A B X P X R X X"
   - "X X U X X X X X X"
-  - "X X X X X X X X X"
-
+  - "X X X X X X X X Z"
+# X - filler
+# A,B,C... - slots
+# U - fuels
+# P - progress bar
+# R - result
+# Z - back button for recipe book
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
@@ -195,8 +203,11 @@ structure:
   - "X X O X X X X X X"
   - "X O O O X X X R X"
   - "X X O X X X X X X"
-  - "O X X X O X X X X"
-
+  - "O X X X O X X X Z"
+# X - filler
+# O - slots
+# R - result slot
+# Z - back button for recipe book
 filler:
   material: BLACK_STAINED_GLASS_PANE
   name: ""
@@ -249,4 +260,20 @@ recipes:
     8:
       material: STONE
       amount: 1
+```
+
+### Basic config example (`config.yml`)
+```
+no-perm: "&cNo rights!"
+reload: "&aConfigs succesfully reloaded!"
+usages:
+  - "&f/iai reload <name> - reload configs"
+recipe-book:
+  enabled: true
+  item: "KNOWLEDGE_BOOK"
+  name: "&6Recipe book"
+  gui-title: "&8Recipe book"
+  hidden-stations:
+    - "secret_workbench"
+    - "admin_furnace"
 ```
