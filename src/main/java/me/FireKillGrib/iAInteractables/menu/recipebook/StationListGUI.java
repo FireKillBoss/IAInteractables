@@ -4,6 +4,7 @@ import dev.lone.itemsadder.api.CustomStack;
 import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
 import me.FireKillGrib.iAInteractables.data.Workbench;
+import me.FireKillGrib.iAInteractables.integration.RecipeContainer;
 import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -18,6 +19,7 @@ import xyz.xenondevs.invui.item.impl.SimpleItem;
 import xyz.xenondevs.invui.window.Window;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class StationListGUI {
     public void open(Player player) {
@@ -58,6 +60,23 @@ public class StationListGUI {
                     );
             items.add(new SimpleItem(iconBuilder, click -> {
                 new RecipeListGUI(fn).open(player);
+            }));
+        }
+        Map<String, List<RecipeContainer>> externalRecipes = Plugin.getInstance().getIntegrationManager().getExternalRecipes();
+        for (Map.Entry<String, List<RecipeContainer>> entry : externalRecipes.entrySet()) {
+            String namespace = entry.getKey();
+            List<RecipeContainer> recipes = entry.getValue();
+            if (recipes.isEmpty()) continue;
+            String displayName = Plugin.getInstance().getIntegrationManager().getDisplayName(namespace);
+            ItemBuilder iconBuilder = new ItemBuilder(Material.ENDER_CHEST)
+                    .setDisplayName(serializer.serialize(ChatUtil.color(displayName)))
+                    .addLoreLines(
+                        serializer.serialize(ChatUtil.color("&7Click to see recipies")),
+                        serializer.serialize(ChatUtil.color("&7Total recipies: &e" + recipes.size())),
+                        serializer.serialize(ChatUtil.color("&7Plugin: &f" + namespace))
+                    );
+            items.add(new SimpleItem(iconBuilder, click -> {
+                new ExternalRecipeListGUI(namespace, displayName, recipes).open(player);
             }));
         }
         Gui gui = PagedGui.items()

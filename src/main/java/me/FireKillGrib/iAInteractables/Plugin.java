@@ -16,6 +16,7 @@ public class Plugin extends JavaPlugin {
     @Getter private InstanceManager instanceManager;
     @Getter private FurnaceDataManager furnaceDataManager;
     @Getter private FurnaceManager furnaceManager;
+    @Getter private IntegrationManager integrationManager;
 
     @Override
     public void onEnable() {
@@ -27,10 +28,17 @@ public class Plugin extends JavaPlugin {
         instanceManager = new InstanceManager();
         furnaceDataManager = new FurnaceDataManager(getDataFolder());
         furnaceManager = new FurnaceManager();
+        integrationManager = new IntegrationManager();
         PaperCommandManager manager = new PaperCommandManager(this);
         manager.registerCommand(new MainCommand());
         getServer().getPluginManager().registerEvents(new FurnitureListener(), this);
         reload();
+        getServer().getScheduler().runTaskLater(this, () -> {
+            integrationManager.loadRecipes();
+        }, 1200L);
+        if (getServer().getPluginManager().isPluginEnabled("ItemsAdder")) {
+            getServer().getPluginManager().registerEvents(new me.FireKillGrib.iAInteractables.listeners.ItemsAdderListener(), this);
+        }
         getServer().getPluginManager().registerEvents(new RecipeBookListener(), this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             furnaceManager.saveAll();
