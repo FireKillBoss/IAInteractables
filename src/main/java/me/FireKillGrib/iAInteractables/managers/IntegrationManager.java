@@ -13,36 +13,49 @@ public class IntegrationManager {
     public void loadRecipes() {
         externalRecipes.clear();
         Set<String> processedSignatures = new HashSet<>();
-        Set<String> explicitNamespaces = new HashSet<>();
-        if (Bukkit.getPluginManager().isPluginEnabled("CustomCrafting")) explicitNamespaces.add("customcrafting");
-        if (Bukkit.getPluginManager().isPluginEnabled("Craftorithm")) explicitNamespaces.add("craftorithm");
+        List<Recipe> allRecipes = new ArrayList<>();
         Iterator<Recipe> it = Bukkit.recipeIterator();
-        while (it.hasNext()) {
-            Recipe recipe = it.next();
+        while (it.hasNext()) allRecipes.add(it.next());
+        allRecipes.sort(Comparator.comparing(this::getPriority).reversed());
+        for (Recipe recipe : allRecipes) {
             String signature = calculateSignature(recipe);
             if (processedSignatures.contains(signature)) {
                 continue;
             }
-            String namespace = "minecraft";
-            if (recipe instanceof Keyed) {
-                namespace = ((Keyed) recipe).getKey().getNamespace().toLowerCase();
-            }
+            String namespace = getNamespace(recipe);
             boolean added = false;
-            if (explicitNamespaces.contains(namespace)) {
+            boolean isIaItem = false;
+            if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+                if (CustomStack.byItemStack(recipe.getResult()) != null) {
+                    isIaItem = true;
+                }
+            }
+            if (namespace.equals("craftorithm") || namespace.equals("customcrafting")) {
                 addRecipe(namespace, recipe);
                 added = true;
             }
-            if (!added && Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-                if (CustomStack.byItemStack(recipe.getResult()) != null) {
-                    addRecipe("itemsadder", recipe);
-                    added = true;
-                }
+            else if (isIaItem) {
+                addRecipe("itemsadder", recipe);
+                added = true;
             }
             if (added) {
                 processedSignatures.add(signature);
             }
         }
         Plugin.getInstance().getLogger().info("Loaded external recipes: " + externalRecipes.keySet());
+    }
+    private int getPriority(Recipe r) {
+        String ns = getNamespace(r);
+        if (ns.equals("craftorithm")) return 100;
+        if (ns.equals("customcrafting")) return 50;
+        if (ns.equals("itemsadder") || ns.equals("ia")) return 20;
+        return 0;
+    }
+    private String getNamespace(Recipe recipe) {
+        if (recipe instanceof Keyed) {
+            return ((Keyed) recipe).getKey().getNamespace().toLowerCase();
+        }
+        return "minecraft";
     }
     private void addRecipe(String namespace, Recipe recipe) {
         externalRecipes.computeIfAbsent(namespace, k -> new ArrayList<>())
@@ -53,45 +66,58 @@ public class IntegrationManager {
         sb.append(itemToString(recipe.getResult())).append("=");
         List<String> ingredients = new ArrayList<>();
         if (recipe instanceof ShapedRecipe) {
-            ShapedRecipe sr = (ShapedRecipe) recipe;
-            for (RecipeChoice choice : sr.getChoiceMap().values()) {
+            for (RecipeChoice choice : ((ShapedRecipe) recipe).getChoiceMap().values()) {
                 ingredients.add(choiceToString(choice));
             }
         } else if (recipe instanceof ShapelessRecipe) {
-            ShapelessRecipe sl = (ShapelessRecipe) recipe;
-            for (RecipeChoice choice : sl.getChoiceList()) {
+            for (RecipeChoice choice : ((ShapelessRecipe) recipe).getChoiceList()) {
                 ingredients.add(choiceToString(choice));
             }
         } else if (recipe instanceof CookingRecipe) {
             ingredients.add(choiceToString(((CookingRecipe<?>) recipe).getInputChoice()));
+        } else if (recipe instanceof SmithingRecipe) {
+            SmithingRecipe sr = (SmithingRecipe) recipe;
+            ingredients.add(choiceToString(sr.getBase()));
+            ingredients.add(choiceToString(sr.getAddition()));
+            if (recipe instanceof SmithingTransformRecipe) {
+                ingredients.add(choiceToString(((SmithingTransformRecipe) recipe).getTemplate()));
+            }
         }
         Collections.sort(ingredients);
         for (String ing : ingredients) sb.append(ing).append(",");
-        
         return sb.toString();
     }
-
+    
     @SuppressWarnings("deprecation")
     private String choiceToString(RecipeChoice choice) {
-        if (choice == null) return "null";
-        ItemStack item;
+        if (choice == null) return "AIR";
+        ItemStack bestMatch = null;
         if (choice instanceof RecipeChoice.ExactChoice) {
             List<ItemStack> list = ((RecipeChoice.ExactChoice) choice).getChoices();
-            item = list.isEmpty() ? new ItemStack(org.bukkit.Material.AIR) : list.get(0);
-        } else {
-            item = choice.getItemStack();
+            for (ItemStack stack : list) {
+                if (stack.hasItemMeta() && stack.getItemMeta().hasCustomModelData()) {
+                    bestMatch = stack;
+                    break;
+                }
+            }
+            if (bestMatch == null && !list.isEmpty()) bestMatch = list.get(0);
         }
-        return itemToString(item);
+        
+        if (bestMatch == null) {
+            try { bestMatch = choice.getItemStack(); } catch (Exception e) {}
+        }
+        
+        return itemToString(bestMatch);
     }
     private String itemToString(ItemStack item) {
-        if (item == null) return "null";
+        if (item == null) return "AIR";
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
             CustomStack cs = CustomStack.byItemStack(item);
             if (cs != null) return "IA:" + cs.getNamespacedID();
         }
-        String s = item.getType().toString() + ":" + item.getAmount();
+        String s = item.getType().toString();
         if (item.hasItemMeta() && item.getItemMeta().hasCustomModelData()) {
-            s += ":CMD" + item.getItemMeta().getCustomModelData();
+            s += "#" + item.getItemMeta().getCustomModelData();
         }
         return s;
     }

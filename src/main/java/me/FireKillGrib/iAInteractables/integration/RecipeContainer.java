@@ -2,6 +2,9 @@ package me.FireKillGrib.iAInteractables.integration;
 
 import lombok.Getter;
 import org.bukkit.inventory.*;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -54,13 +57,46 @@ public class RecipeContainer {
     @SuppressWarnings("deprecation")
     private ItemStack resolveChoice(RecipeChoice choice) {
         if (choice == null) return null;
+        ItemStack bestCandidate = null;
         if (choice instanceof RecipeChoice.ExactChoice) {
             List<ItemStack> choices = ((RecipeChoice.ExactChoice) choice).getChoices();
-            if (!choices.isEmpty()) {
-                return choices.get(0).clone();
+            for (ItemStack item : choices) {
+                if (item.hasItemMeta() && item.getItemMeta().hasCustomModelData()) {
+                    bestCandidate = item.clone();
+                    break; 
+                }
+            }
+            if (bestCandidate == null && !choices.isEmpty()) {
+                bestCandidate = choices.get(0).clone();
             }
         }
-        return choice.getItemStack().clone();
+        if (bestCandidate == null) {
+            try {
+                bestCandidate = choice.getItemStack().clone();
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return fixPotionVisual(bestCandidate);
+    }
+    private ItemStack fixPotionVisual(ItemStack item) {
+        if (item.getType() == org.bukkit.Material.POTION || 
+            item.getType() == org.bukkit.Material.SPLASH_POTION || 
+            item.getType() == org.bukkit.Material.LINGERING_POTION) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta instanceof PotionMeta) {
+                PotionMeta pm = (PotionMeta) meta;
+                if (pm.getBasePotionType() == null) {
+                    if (pm.hasCustomEffects()) {
+                        pm.setBasePotionType(PotionType.AWKWARD);
+                    } else {
+                        pm.setBasePotionType(PotionType.WATER);
+                    }
+                    item.setItemMeta(pm);
+                }
+            }
+        }
+        return item;
     }
     private void parseShaped(ShapedRecipe recipe) {
         Map<Character, RecipeChoice> choiceMap = recipe.getChoiceMap();
@@ -70,11 +106,8 @@ public class RecipeContainer {
             int col = 0;
             for (char c : line.toCharArray()) {
                 if (choiceMap.containsKey(c)) {
-                    RecipeChoice choice = choiceMap.get(c);
-                    ItemStack item = resolveChoice(choice);
-                    if (item != null) {
-                        shapedIngredients.put(row * 3 + col, item);
-                    }
+                    ItemStack item = resolveChoice(choiceMap.get(c));
+                    if (item != null) shapedIngredients.put(row * 3 + col, item);
                 }
                 col++;
             }
@@ -95,7 +128,6 @@ public class RecipeContainer {
     private void parseSmithing(SmithingRecipe recipe) {
         this.smithingBase = resolveChoice(recipe.getBase());
         this.smithingAddition = resolveChoice(recipe.getAddition());
-        
         if (recipe instanceof SmithingTransformRecipe) {
             this.smithingTemplate = resolveChoice(((SmithingTransformRecipe) recipe).getTemplate());
         } else if (recipe instanceof SmithingTrimRecipe) {

@@ -11,19 +11,26 @@ import xyz.xenondevs.invui.gui.Gui;
 import xyz.xenondevs.invui.item.builder.ItemBuilder;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
 import xyz.xenondevs.invui.window.Window;
+import java.util.List;
 
 public class ExternalRecipeViewGUI {
     private final RecipeContainer recipe;
-    public ExternalRecipeViewGUI(RecipeContainer recipe, String prevTitle) {
+    private final String namespace;
+    private final String displayName;
+    private final List<RecipeContainer> categoryRecipes;
+    public ExternalRecipeViewGUI(RecipeContainer recipe, String namespace, String displayName, List<RecipeContainer> categoryRecipes) {
         this.recipe = recipe;
+        this.namespace = namespace;
+        this.displayName = displayName;
+        this.categoryRecipes = categoryRecipes;
     }
     public void open(Player player) {
         LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
         Gui.Builder.Normal guiBuilder = Gui.normal();
         SimpleItem backButton = new SimpleItem(
                 new ItemBuilder(Material.BARRIER)
-                    .setDisplayName(serializer.serialize(ChatUtil.color("&cClose"))),
-                click -> player.closeInventory()
+                    .setDisplayName(serializer.serialize(ChatUtil.color("&cBack to list"))),
+                click -> new ExternalRecipeListGUI(namespace, displayName, categoryRecipes).open(player)
         );
         SimpleItem resultItem = new SimpleItem(new ItemBuilder(recipe.getResult()));
         SimpleItem filler = new SimpleItem(new ItemBuilder(Material.BLACK_STAINED_GLASS_PANE).setDisplayName(" "));
@@ -104,7 +111,7 @@ public class ExternalRecipeViewGUI {
             guiBuilder.addIngredient('X', filler);
         }
         Window.single()
-                .setTitle(new AdventureComponentWrapper(ChatUtil.color("&8Receipt view")))
+                .setTitle(new AdventureComponentWrapper(ChatUtil.color("&8View recipe")))
                 .setGui(guiBuilder.build())
                 .build(player)
                 .open();
