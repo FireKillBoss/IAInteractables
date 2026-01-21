@@ -12,54 +12,78 @@ public class IntegrationManager {
     private final Map<String, List<RecipeContainer>> externalRecipes = new HashMap<>();
     public void loadRecipes() {
         externalRecipes.clear();
-        Set<String> processedSignatures = new HashSet<>();
-        List<Recipe> allRecipes = new ArrayList<>();
+        Map<String, List<RecipeInfo>> signatureMap = new HashMap<>();
         Iterator<Recipe> it = Bukkit.recipeIterator();
-        while (it.hasNext()) allRecipes.add(it.next());
-        allRecipes.sort(Comparator.comparing(this::getPriority).reversed());
-        for (Recipe recipe : allRecipes) {
-            String signature = calculateSignature(recipe);
-            if (processedSignatures.contains(signature)) {
-                continue;
-            }
-            String namespace = getNamespace(recipe);
-            boolean added = false;
-            boolean isIaItem = false;
-            if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
-                if (CustomStack.byItemStack(recipe.getResult()) != null) {
-                    isIaItem = true;
+        while (it.hasNext()) {
+            Recipe recipe = it.next();
+            if (recipe instanceof Keyed) {
+                String rawNamespace = ((Keyed) recipe).getKey().getNamespace();
+                if (rawNamespace.startsWith("zzzfake_")) {
+                    continue; 
                 }
             }
-            if (namespace.equals("craftorithm") || namespace.equals("customcrafting")) {
-                addRecipe(namespace, recipe);
-                added = true;
+            String signature = calculateSignature(recipe);
+            String namespace = resolveNamespace(recipe);
+            if (!isPluginRecipe(namespace, recipe)) {
+                continue;
             }
-            else if (isIaItem) {
-                addRecipe("itemsadder", recipe);
-                added = true;
-            }
-            if (added) {
-                processedSignatures.add(signature);
+            signatureMap.computeIfAbsent(signature, k -> new ArrayList<>())
+                    .add(new RecipeInfo(namespace, recipe));
+        }
+        for (List<RecipeInfo> duplicates : signatureMap.values()) {
+            RecipeInfo best = selectBestRecipe(duplicates);
+            if (best != null) {
+                addRecipe(best.namespace, best.recipe);
             }
         }
         Plugin.getInstance().getLogger().info("Loaded external recipes: " + externalRecipes.keySet());
     }
-    private int getPriority(Recipe r) {
-        String ns = getNamespace(r);
-        if (ns.equals("craftorithm")) return 100;
-        if (ns.equals("customcrafting")) return 50;
-        if (ns.equals("itemsadder") || ns.equals("ia")) return 20;
-        return 0;
-    }
-    private String getNamespace(Recipe recipe) {
+    private String resolveNamespace(Recipe recipe) {
         if (recipe instanceof Keyed) {
-            return ((Keyed) recipe).getKey().getNamespace().toLowerCase();
+            String ns = ((Keyed) recipe).getKey().getNamespace().toLowerCase();
+            if (ns.equals("ia")) return "itemsadder";
+            if (ns.equals("cc")) return "customcrafting";
+            return ns;
         }
-        return "minecraft";
+        return "unknown";
+    }
+    private boolean isPluginRecipe(String namespace, Recipe recipe) {
+        if (namespace.equals("itemsadder") || 
+            namespace.equals("customcrafting") || 
+            namespace.equals("craftorithm")) {
+            return true;
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+            if (CustomStack.byItemStack(recipe.getResult()) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+    private RecipeInfo selectBestRecipe(List<RecipeInfo> candidates) {
+        if (candidates.isEmpty()) return null;
+        if (candidates.size() == 1) return candidates.get(0);
+        for (RecipeInfo info : candidates) {
+            if (info.namespace.equals("itemsadder")) return info;
+        }
+        for (RecipeInfo info : candidates) {
+            if (info.namespace.equals("customcrafting")) return info;
+        }
+        return candidates.get(0);
     }
     private void addRecipe(String namespace, Recipe recipe) {
+        if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {
+            if (CustomStack.byItemStack(recipe.getResult()) != null) {
+                namespace = "itemsadder";
+            }
+        }
         externalRecipes.computeIfAbsent(namespace, k -> new ArrayList<>())
                 .add(new RecipeContainer(recipe));
+    }
+    private static class RecipeInfo {
+        String namespace;
+        Recipe recipe;
+        RecipeInfo(String n, Recipe r) { namespace = n; recipe = r; }
     }
     private String calculateSignature(Recipe recipe) {
         StringBuilder sb = new StringBuilder();
@@ -79,15 +103,19 @@ public class IntegrationManager {
             SmithingRecipe sr = (SmithingRecipe) recipe;
             ingredients.add(choiceToString(sr.getBase()));
             ingredients.add(choiceToString(sr.getAddition()));
-            if (recipe instanceof SmithingTransformRecipe) {
-                ingredients.add(choiceToString(((SmithingTransformRecipe) recipe).getTemplate()));
-            }
+            try {
+                if (recipe instanceof SmithingTransformRecipe) {
+                    ingredients.add(choiceToString(((SmithingTransformRecipe) recipe).getTemplate()));
+                } else if (recipe instanceof SmithingTrimRecipe) {
+                    ingredients.add(choiceToString(((SmithingTrimRecipe) recipe).getTemplate()));
+                }
+            } catch (Throwable ignored) {}
         }
         Collections.sort(ingredients);
         for (String ing : ingredients) sb.append(ing).append(",");
         return sb.toString();
     }
-    
+
     @SuppressWarnings("deprecation")
     private String choiceToString(RecipeChoice choice) {
         if (choice == null) return "AIR";
@@ -102,11 +130,9 @@ public class IntegrationManager {
             }
             if (bestMatch == null && !list.isEmpty()) bestMatch = list.get(0);
         }
-        
         if (bestMatch == null) {
             try { bestMatch = choice.getItemStack(); } catch (Exception e) {}
         }
-        
         return itemToString(bestMatch);
     }
     private String itemToString(ItemStack item) {
