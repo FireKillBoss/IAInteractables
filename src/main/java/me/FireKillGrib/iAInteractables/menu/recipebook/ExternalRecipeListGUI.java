@@ -5,6 +5,8 @@ import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.ClickType;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionType;
@@ -13,6 +15,7 @@ import xyz.xenondevs.invui.gui.PagedGui;
 import xyz.xenondevs.invui.gui.structure.Markers;
 import xyz.xenondevs.invui.item.ItemProvider;
 import xyz.xenondevs.invui.item.builder.ItemBuilder;
+import xyz.xenondevs.invui.item.impl.AbstractItem;
 import xyz.xenondevs.invui.item.impl.SimpleItem;
 import xyz.xenondevs.invui.window.Window;
 import java.util.ArrayList;
@@ -53,7 +56,12 @@ public class ExternalRecipeListGUI {
                 ))
                 .setContent(items);
         PagedGui<xyz.xenondevs.invui.item.Item> gui = builder.build();
-        updateNavigationButtons(gui, serializer);
+        LinkedPageButton backBtn = new LinkedPageButton(false, gui);
+        LinkedPageButton fwdBtn = new LinkedPageButton(true, gui);
+        backBtn.setPartner(fwdBtn);
+        fwdBtn.setPartner(backBtn);
+        gui.setItem(38, backBtn);
+        gui.setItem(42, fwdBtn);
         Window.single()
                 .setViewer(player)
                 .setTitle(new AdventureComponentWrapper(ChatUtil.color(displayName)))
@@ -66,58 +74,68 @@ public class ExternalRecipeListGUI {
             if (item.getItemMeta() instanceof PotionMeta) {
                 PotionMeta meta = (PotionMeta) item.getItemMeta();
                 if (meta.getBasePotionType() == null) {
-                    if (meta.hasCustomEffects()) {
-                        meta.setBasePotionType(PotionType.AWKWARD);
-                    } else {
-                        meta.setBasePotionType(PotionType.WATER);
-                    }
+                    meta.setBasePotionType(PotionType.WATER);
                     item.setItemMeta(meta);
                 }
             }
         }
         return item;
     }
-    private void updateNavigationButtons(PagedGui<xyz.xenondevs.invui.item.Item> gui, LegacyComponentSerializer serializer) {
-        
-        gui.setItem(38, new SimpleItem(new ItemProvider() {
-            @Override
-            public ItemStack get(String lang) {
-                if (gui.hasPreviousPage()) {
-                    return new ItemBuilder(Material.ARROW)
-                            .setDisplayName(serializer.serialize(ChatUtil.color("&eBack")))
-                            .addLoreLines(serializer.serialize(ChatUtil.color("&7Page " + gui.getCurrentPage() + " / " + gui.getPageAmount())))
-                            .get(lang);
-                } else {
-                    return new ItemBuilder(Material.GRAY_DYE)
-                            .setDisplayName(serializer.serialize(ChatUtil.color("&7No next pages")))
-                            .get(lang);
-                }
-            }
-        }, click -> {
-            if (gui.hasPreviousPage()) {
-                gui.goBack();
-                updateNavigationButtons(gui, serializer);
-            }
-        }));
-        gui.setItem(42, new SimpleItem(new ItemProvider() {
-            @Override
-            public ItemStack get(String lang) {
+    private static class LinkedPageButton extends AbstractItem {
+        private final boolean forward;
+        private final PagedGui<?> gui;
+        private final LegacyComponentSerializer serializer = LegacyComponentSerializer.legacySection();
+        private LinkedPageButton partner;
+        public LinkedPageButton(boolean forward, PagedGui<?> gui) {
+            this.forward = forward;
+            this.gui = gui;
+        }
+        public void setPartner(LinkedPageButton partner) {
+            this.partner = partner;
+        }
+
+        @Override
+        public ItemProvider getItemProvider() {
+            ItemBuilder builder;
+            if (forward) {
                 if (gui.hasNextPage()) {
-                    return new ItemBuilder(Material.ARROW)
+                    builder = new ItemBuilder(Material.ARROW)
                             .setDisplayName(serializer.serialize(ChatUtil.color("&eForward")))
-                            .addLoreLines(serializer.serialize(ChatUtil.color("&7Page " + (gui.getCurrentPage() + 2) + " / " + gui.getPageAmount())))
-                            .get(lang);
+                            .addLoreLines(serializer.serialize(ChatUtil.color("&7Page " + (gui.getCurrentPage() + 2) + " / " + gui.getPageAmount())));
                 } else {
-                    return new ItemBuilder(Material.GRAY_DYE)
-                            .setDisplayName(serializer.serialize(ChatUtil.color("&7No next pages")))
-                            .get(lang);
+                    builder = new ItemBuilder(Material.GRAY_DYE)
+                            .setDisplayName(serializer.serialize(ChatUtil.color("&7No next pages")));
+                }
+            } else {
+                if (gui.hasPreviousPage()) {
+                    builder = new ItemBuilder(Material.ARROW)
+                            .setDisplayName(serializer.serialize(ChatUtil.color("&eBack")))
+                            .addLoreLines(serializer.serialize(ChatUtil.color("&7Page " + (gui.getCurrentPage()) + " / " + gui.getPageAmount())));
+                } else {
+                    builder = new ItemBuilder(Material.GRAY_DYE)
+                            .setDisplayName(serializer.serialize(ChatUtil.color("&7No next pages")));
                 }
             }
-        }, click -> {
-            if (gui.hasNextPage()) {
-                gui.goForward();
-                updateNavigationButtons(gui, serializer);
+            return builder;
+        }
+
+        @Override
+        public void handleClick(ClickType clickType, Player player, InventoryClickEvent event) {
+            if (forward) {
+                if (gui.hasNextPage()) {
+                    gui.goForward();
+                    updateBoth();
+                }
+            } else {
+                if (gui.hasPreviousPage()) {
+                    gui.goBack();
+                    updateBoth();
+                }
             }
-        }));
+        }
+        private void updateBoth() {
+            this.notifyWindows();
+            if (partner != null) partner.notifyWindows();
+        }
     }
 }

@@ -15,6 +15,7 @@ import java.util.*;
 public class RecipeManager {
     private final List<Furnace> furnaces = new ArrayList<>();
     private final List<Workbench> workbenches = new ArrayList<>();
+    private final List<SmithingTable> smithingTables = new ArrayList<>();
     public void loadFurnaces() {
     furnaces.clear();
     File folder = new File(Plugin.getInstance().getDataFolder(), "furnaces");
@@ -254,6 +255,87 @@ public class RecipeManager {
             WorkbenchEffects effects = WorkbenchEffects.fromConfig(cfg.getConfigurationSection("effects"));
             workbenches.add(new Workbench(name, title, iaFurniture, structure, filler, recipes, effects));
         }
+    }
+    public void loadSmithingTables() {
+        smithingTables.clear();
+        File folder = new File(Plugin.getInstance().getDataFolder(), "smithing_tables");
+        if (!folder.exists()) return;
+        File[] files = folder.listFiles((d, name) -> name.endsWith(".yml"));
+        if (files == null) return;
+        for (File file : files) {
+            YamlConfiguration cfg = YamlConfiguration.loadConfiguration(file);
+            String name = file.getName().replace(".yml", "");
+            String title = cfg.getString("title", "&8Smithing Table");
+            String iaFurniture = cfg.getString("itemsadder-furniture");
+            List<String> structure = cfg.getStringList("structure");
+            ItemProvider filler = new me.FireKillGrib.iAInteractables.utils.ItemBuilder(org.bukkit.Material.BLACK_STAINED_GLASS_PANE).setDisplayName(" ").getItemProvider();
+            ConfigurationSection fillerSec = cfg.getConfigurationSection("filler");
+            if (fillerSec != null) {
+                String mat = fillerSec.getString("material", "BLACK_STAINED_GLASS_PANE");
+                String nameStr = fillerSec.getString("name", "");
+                List<String> lore = fillerSec.getStringList("lore");
+                ItemStack item;
+                try {
+                    if (mat.toLowerCase().startsWith("ia-") || mat.contains(":")) {
+                        item = new me.FireKillGrib.iAInteractables.utils.ItemsBuilder(mat).build();
+                    } else {
+                        item = new ItemStack(org.bukkit.Material.valueOf(mat.toUpperCase()));
+                    }
+                } catch (Exception e) {
+                    Plugin.getInstance().getLogger().warning("Invalid filler material: " + mat + " in " + file.getName());
+                    item = new ItemStack(org.bukkit.Material.BLACK_STAINED_GLASS_PANE);
+                }
+                me.FireKillGrib.iAInteractables.utils.ItemBuilder builder = new me.FireKillGrib.iAInteractables.utils.ItemBuilder(item);
+                if (nameStr != null) builder.setDisplayName(nameStr);
+                if (lore != null) builder.setLore(lore);
+                filler = builder.getItemProvider();
+            } else {
+                filler = new me.FireKillGrib.iAInteractables.utils.ItemBuilder(org.bukkit.Material.BLACK_STAINED_GLASS_PANE)
+                    .setDisplayName(" ")
+                    .getItemProvider();
+            }
+            Set<SmithingRecipe> recipes = new HashSet<>();
+            ConfigurationSection recipesSec = cfg.getConfigurationSection("recipes");
+            if (recipesSec != null) {
+                for (String key : recipesSec.getKeys(false)) {
+                    ConfigurationSection s = recipesSec.getConfigurationSection(key);
+                    if (s == null) continue;
+                    ItemStack result = parseItem(s.getConfigurationSection("result"));
+                    ItemStack template = parseItem(s.getConfigurationSection("template"));
+                    ItemStack base = parseItem(s.getConfigurationSection("base"));
+                    ItemStack addition = parseItem(s.getConfigurationSection("addition"));
+                    if (result != null) {
+                        recipes.add(new SmithingRecipe(result, template, base, addition));
+                    }
+                }
+            }
+            WorkbenchEffects effects = WorkbenchEffects.fromConfig(cfg.getConfigurationSection("effects"));
+            smithingTables.add(new SmithingTable(name, title, iaFurniture, structure, filler, recipes, effects));
+        }
+    }
+    private ItemStack parseItem(ConfigurationSection section) {
+        if (section == null) return null;
+        String material = section.getString("material");
+        int amount = section.getInt("amount", 1);
+        if (material == null) return null;
+        try {
+            ItemStack item;
+            if (material.startsWith("ia-") || material.contains(":")) {
+                item = new me.FireKillGrib.iAInteractables.utils.ItemsBuilder(material).build();
+            } else {
+                item = new ItemStack(org.bukkit.Material.valueOf(material.toUpperCase()));
+            }
+            item.setAmount(amount);
+            return item;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    public List<SmithingTable> getSmithingTables() {
+        return smithingTables;
+    }
+    public SmithingTable getSmithingTable(String name) {
+        return smithingTables.stream().filter(s -> s.getName().equals(name)).findFirst().orElse(null);
     }
     public List<Furnace> getFurnaces() {
         return furnaces;

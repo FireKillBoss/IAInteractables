@@ -72,6 +72,7 @@ public class ItemsBuilder {
         itemStack.setItemMeta(meta);
         return this;
     }
+    @SuppressWarnings("deprecation")
     public ItemsBuilder setCustomModelData(int value){
         meta.setCustomModelData(value);
         itemStack.setItemMeta(meta);

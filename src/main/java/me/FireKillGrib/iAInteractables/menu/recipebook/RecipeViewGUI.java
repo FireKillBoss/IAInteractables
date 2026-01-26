@@ -1,9 +1,6 @@
 package me.FireKillGrib.iAInteractables.menu.recipebook;
 
-import me.FireKillGrib.iAInteractables.data.Furnace;
-import me.FireKillGrib.iAInteractables.data.FurnaceRecipe;
-import me.FireKillGrib.iAInteractables.data.Workbench;
-import me.FireKillGrib.iAInteractables.data.WorkbenchRecipe;
+import me.FireKillGrib.iAInteractables.data.*;
 import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -22,17 +19,31 @@ public class RecipeViewGUI {
     private final WorkbenchRecipe wbRecipe;
     private final Furnace furnace;
     private final FurnaceRecipe fnRecipe;
+    private final SmithingTable smithingTable;
+    private final SmithingRecipe smithingRecipe;
     public RecipeViewGUI(Workbench wb, WorkbenchRecipe recipe) {
         this.workbench = wb;
         this.wbRecipe = recipe;
         this.furnace = null;
         this.fnRecipe = null;
+        this.smithingTable = null;
+        this.smithingRecipe = null;
     }
     public RecipeViewGUI(Furnace fn, FurnaceRecipe recipe) {
         this.furnace = fn;
         this.fnRecipe = recipe;
         this.workbench = null;
         this.wbRecipe = null;
+        this.smithingTable = null;
+        this.smithingRecipe = null;
+    }
+    public RecipeViewGUI(SmithingTable st, SmithingRecipe recipe) {
+        this.smithingTable = st;
+        this.smithingRecipe = recipe;
+        this.workbench = null;
+        this.wbRecipe = null;
+        this.furnace = null;
+        this.fnRecipe = null;
     }
     public void open(Player player) {
         Gui.Builder.Normal guiBuilder = Gui.normal();
@@ -44,6 +55,7 @@ public class RecipeViewGUI {
                 click -> {
                     if (workbench != null) new RecipeListGUI(workbench).open(player);
                     else if (furnace != null) new RecipeListGUI(furnace).open(player);
+                    else if (smithingTable != null) new RecipeListGUI(smithingTable).open(player);
                 }
         );
         if (workbench != null) {
@@ -52,13 +64,10 @@ public class RecipeViewGUI {
             for (String row : structure) {
                 String cleanRow = row.replace(" ", "");
                 for (char c : cleanRow.toCharArray()) {
-                    if (c == 'X') {
-                        guiBuilder.addIngredient('X', workbench.getFiller());
-                    } else if (c == 'R') {
-                        guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(wbRecipe.getResult())));
-                    } else if (c == 'Z') {
-                        guiBuilder.addIngredient('Z', backButton);
-                    } else {
+                    if (c == 'X') guiBuilder.addIngredient('X', workbench.getFiller());
+                    else if (c == 'R') guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(wbRecipe.getResult())));
+                    else if (c == 'Z') guiBuilder.addIngredient('Z', backButton);
+                    else {
                         if (wbRecipe.getIngredients().containsKey(c)) {
                             guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(wbRecipe.getIngredients().get(c))));
                         } else {
@@ -73,35 +82,46 @@ public class RecipeViewGUI {
             for (String row : structure) {
                 String cleanRow = row.replace(" ", "");
                 for (char c : cleanRow.toCharArray()) {
-                    if (c == 'X') {
-                        guiBuilder.addIngredient('X', furnace.getFiller());
-                    } else if (c == 'P') {
-                        guiBuilder.addIngredient('P', new SimpleItem(new ItemBuilder(furnace.getProgressBar().getItemForProgress(0))));
-                    } else if (c == 'R') {
-                        guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(fnRecipe.getResult())));
-                    } else if (c == 'Z') {
-                        guiBuilder.addIngredient('Z', backButton);
-                    } else {
+                    if (c == 'X') guiBuilder.addIngredient('X', furnace.getFiller());
+                    else if (c == 'P') guiBuilder.addIngredient('P', new SimpleItem(new ItemBuilder(furnace.getProgressBar().getItemForProgress(0))));
+                    else if (c == 'R') guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(fnRecipe.getResult())));
+                    else if (c == 'B') guiBuilder.addIngredient('B', backButton);
+                    else {
                         if (fnRecipe.getRaws().containsKey(c)) {
                             Set<ItemStack> raws = fnRecipe.getRaws().get(c);
-                            if (!raws.isEmpty()) {
-                                guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(raws.iterator().next())));
-                            }
-                        } 
-                        else if (fnRecipe.getFuels().containsKey(c)) {
+                            if (!raws.isEmpty()) guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(raws.iterator().next())));
+                        } else if (fnRecipe.getFuels().containsKey(c)) {
                             Set<ItemStack> fuels = fnRecipe.getFuels().get(c);
-                            if (!fuels.isEmpty()) {
-                                guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(fuels.iterator().next())));
-                            }
+                            if (!fuels.isEmpty()) guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(fuels.iterator().next())));
                         } else {
                             guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(Material.AIR)));
                         }
                     }
                 }
             }
+        } else if (smithingTable != null) {
+            structure = smithingTable.getStructure();
+            guiBuilder.setStructure(structure.toArray(new String[0]));
+            for (String row : structure) {
+                String cleanRow = row.replace(" ", "");
+                for (char c : cleanRow.toCharArray()) {
+                    if (c == 'X') guiBuilder.addIngredient('X', smithingTable.getFiller());
+                    else if (c == 'R') guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(smithingRecipe.getResult())));
+                    else if (c == 'Z') guiBuilder.addIngredient('Z', backButton);
+                    else if (c == 'T') {
+                        guiBuilder.addIngredient('T', new SimpleItem(new ItemBuilder(smithingRecipe.getTemplate())));
+                    } else if (c == 'B' || c == 'O') {
+                        guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(smithingRecipe.getBase())));
+                    } else if (c == 'A') {
+                        guiBuilder.addIngredient('A', new SimpleItem(new ItemBuilder(smithingRecipe.getAddition())));
+                    } else {
+                        guiBuilder.addIngredient(c, new SimpleItem(new ItemBuilder(Material.AIR)));
+                    }
+                }
+            }
         }
         Window window = Window.single()
-                .setTitle(new AdventureComponentWrapper(ChatUtil.color("&8View recipe")))
+                .setTitle(new AdventureComponentWrapper(ChatUtil.color("&8See recipie")))
                 .setGui(guiBuilder.build())
                 .build(player);
         window.open();

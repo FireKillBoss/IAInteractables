@@ -8,6 +8,8 @@ import me.FireKillGrib.iAInteractables.data.Workbench;
 import me.FireKillGrib.iAInteractables.managers.FurnaceController;
 import me.FireKillGrib.iAInteractables.menu.FurnaceGUI;
 import me.FireKillGrib.iAInteractables.menu.WorkbenchGUI;
+import me.FireKillGrib.iAInteractables.data.SmithingTable;
+import me.FireKillGrib.iAInteractables.menu.SmithingGUI;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -36,6 +38,12 @@ public class FurnitureListener implements Listener {
         if (workbench != null) {
             event.setCancelled(true);
             new WorkbenchGUI(workbench).open(player);
+        }
+        SmithingTable smithingTable = Plugin.getInstance().getRecipeManager().getSmithingTable(name);
+        if (smithingTable != null) {
+            event.setCancelled(true);
+            new SmithingGUI(smithingTable).open(player);
+            return;
         }
     }
 

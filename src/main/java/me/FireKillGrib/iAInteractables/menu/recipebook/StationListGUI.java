@@ -3,8 +3,8 @@ package me.FireKillGrib.iAInteractables.menu.recipebook;
 import dev.lone.itemsadder.api.CustomStack;
 import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.data.Furnace;
+import me.FireKillGrib.iAInteractables.data.SmithingTable;
 import me.FireKillGrib.iAInteractables.data.Workbench;
-import me.FireKillGrib.iAInteractables.integration.RecipeContainer;
 import me.FireKillGrib.iAInteractables.utils.ChatUtil;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -20,6 +20,7 @@ import xyz.xenondevs.invui.window.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import me.FireKillGrib.iAInteractables.integration.RecipeContainer;
 
 public class StationListGUI {
     public void open(Player player) {
@@ -62,6 +63,24 @@ public class StationListGUI {
                 new RecipeListGUI(fn).open(player);
             }));
         }
+        for (SmithingTable st : Plugin.getInstance().getRecipeManager().getSmithingTables()) {
+            if (hidden.contains(st.getName())) continue;
+            ItemStack iconStack;
+            if (st.getNamespacedID() != null && CustomStack.getInstance(st.getNamespacedID()) != null) {
+                iconStack = CustomStack.getInstance(st.getNamespacedID()).getItemStack();
+            } else {
+                iconStack = new ItemStack(Material.SMITHING_TABLE);
+            }
+            ItemBuilder iconBuilder = new ItemBuilder(iconStack)
+                    .setDisplayName(serializer.serialize(ChatUtil.color("&e" + st.getTitle())))
+                    .addLoreLines(
+                            serializer.serialize(ChatUtil.color("&7Click to see recipies")),
+                            serializer.serialize(ChatUtil.color("&7Type: smithing table"))
+                    );
+            items.add(new SimpleItem(iconBuilder, click -> {
+                new RecipeListGUI(st).open(player);
+            }));
+        }
         Map<String, List<RecipeContainer>> externalRecipes = Plugin.getInstance().getIntegrationManager().getExternalRecipes();
         for (Map.Entry<String, List<RecipeContainer>> entry : externalRecipes.entrySet()) {
             String namespace = entry.getKey();
@@ -89,11 +108,11 @@ public class StationListGUI {
                 )
                 .addIngredient('x', Markers.CONTENT_LIST_SLOT_HORIZONTAL)
                 .addIngredient('<', new SimpleItem(new ItemBuilder(Material.ARROW)
-                        .setDisplayName(serializer.serialize(ChatUtil.color("Back")))))
+                        .setDisplayName(serializer.serialize(ChatUtil.color("&eBack")))))
                 .addIngredient('>', new SimpleItem(new ItemBuilder(Material.ARROW)
-                        .setDisplayName(serializer.serialize(ChatUtil.color("Forward")))))
+                        .setDisplayName(serializer.serialize(ChatUtil.color("&eForward")))))
                 .addIngredient('C', new SimpleItem(new ItemBuilder(Material.BARRIER)
-                        .setDisplayName(serializer.serialize(ChatUtil.color("Close"))), 
+                        .setDisplayName(serializer.serialize(ChatUtil.color("&cClose"))), 
                         click -> click.getPlayer().closeInventory()))
                 .setContent(items)
                 .build();

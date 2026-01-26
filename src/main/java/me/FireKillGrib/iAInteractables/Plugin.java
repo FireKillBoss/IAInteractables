@@ -4,10 +4,14 @@ import co.aikar.commands.PaperCommandManager;
 import lombok.Getter;
 import me.FireKillGrib.iAInteractables.commands.MainCommand;
 import me.FireKillGrib.iAInteractables.listeners.FurnitureListener;
+import me.FireKillGrib.iAInteractables.listeners.ItemsAdderListener;
 import me.FireKillGrib.iAInteractables.listeners.RecipeBookListener;
 import me.FireKillGrib.iAInteractables.managers.*;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Plugin extends JavaPlugin {
     @Getter private static Plugin instance;
@@ -21,6 +25,17 @@ public class Plugin extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
+        int pluginId = 29019;
+        Metrics metrics = new Metrics(this, pluginId);
+        metrics.addCustomChart(
+            new Metrics.SimplePie("chart_id", () -> "My value")
+        );
+        metrics.addCustomChart(new Metrics.MultiLineChart("players_and_servers", () -> {
+            Map<String, Integer> valueMap = new HashMap<>();
+            valueMap.put("servers", 1);
+            valueMap.put("players", Bukkit.getOnlinePlayers().size());
+            return valueMap;
+        }));
         saveDefaultConfig();
         createDefaultConfigs();
         configManager = new ConfigManager();
@@ -32,14 +47,14 @@ public class Plugin extends JavaPlugin {
         PaperCommandManager manager = new PaperCommandManager(this);
         manager.registerCommand(new MainCommand());
         getServer().getPluginManager().registerEvents(new FurnitureListener(), this);
+        if (getServer().getPluginManager().isPluginEnabled("ItemsAdder")) {
+            getServer().getPluginManager().registerEvents(new ItemsAdderListener(), this);
+        }
+        getServer().getPluginManager().registerEvents(new RecipeBookListener(), this);
         reload();
         getServer().getScheduler().runTaskLater(this, () -> {
             integrationManager.loadRecipes();
         }, 1200L);
-        if (getServer().getPluginManager().isPluginEnabled("ItemsAdder")) {
-            getServer().getPluginManager().registerEvents(new me.FireKillGrib.iAInteractables.listeners.ItemsAdderListener(), this);
-        }
-        getServer().getPluginManager().registerEvents(new RecipeBookListener(), this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             furnaceManager.saveAll();
         }, 6000L, 6000L);
@@ -58,11 +73,13 @@ public class Plugin extends JavaPlugin {
             recipeManager.clearAll();
             recipeManager.loadFurnaces();
             recipeManager.loadWorkbenches();
+            recipeManager.loadSmithingTables();
         }
     }
     private void createDefaultConfigs() {
         File furnacesFolder = new File(getDataFolder(), "furnaces");
         File workbenchesFolder = new File(getDataFolder(), "workbenches");
+        File smithingFolder = new File(getDataFolder(), "smithing_tables");
         if (!furnacesFolder.exists()) {
             furnacesFolder.mkdirs();
             saveResource("furnaces/default.yml", false);
@@ -70,6 +87,10 @@ public class Plugin extends JavaPlugin {
         if (!workbenchesFolder.exists()) {
             workbenchesFolder.mkdirs();
             saveResource("workbenches/default.yml", false);
+        }
+        if (!smithingFolder.exists()) {
+            smithingFolder.mkdirs();
+            saveResource("smithing_tables/default.yml", false);
         }
     }
 }

@@ -3,6 +3,7 @@ package me.FireKillGrib.iAInteractables.managers;
 import dev.lone.itemsadder.api.CustomStack;
 import me.FireKillGrib.iAInteractables.Plugin;
 import me.FireKillGrib.iAInteractables.integration.RecipeContainer;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Keyed;
 import org.bukkit.inventory.*;
@@ -17,16 +18,11 @@ public class IntegrationManager {
         while (it.hasNext()) {
             Recipe recipe = it.next();
             if (recipe instanceof Keyed) {
-                String rawNamespace = ((Keyed) recipe).getKey().getNamespace();
-                if (rawNamespace.startsWith("zzzfake_")) {
-                    continue; 
-                }
+                if (((Keyed) recipe).getKey().getNamespace().startsWith("zzzfake_")) continue;
             }
             String signature = calculateSignature(recipe);
             String namespace = resolveNamespace(recipe);
-            if (!isPluginRecipe(namespace, recipe)) {
-                continue;
-            }
+            if (!isPluginRecipe(namespace, recipe)) continue;
             signatureMap.computeIfAbsent(signature, k -> new ArrayList<>())
                     .add(new RecipeInfo(namespace, recipe));
         }
@@ -36,7 +32,21 @@ public class IntegrationManager {
                 addRecipe(best.namespace, best.recipe);
             }
         }
+        for (List<RecipeContainer> list : externalRecipes.values()) {
+            list.sort((r1, r2) -> {
+                String name1 = getItemName(r1.getResult());
+                String name2 = getItemName(r2.getResult());
+                return name1.compareToIgnoreCase(name2);
+            });
+        }
         Plugin.getInstance().getLogger().info("Loaded external recipes: " + externalRecipes.keySet());
+    }
+    private String getItemName(ItemStack item) {
+        if (item == null) return "";
+        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
+            return PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName());
+        }
+        return item.getType().name();
     }
     private String resolveNamespace(Recipe recipe) {
         if (recipe instanceof Keyed) {
@@ -135,6 +145,8 @@ public class IntegrationManager {
         }
         return itemToString(bestMatch);
     }
+
+    @SuppressWarnings("deprecation")
     private String itemToString(ItemStack item) {
         if (item == null) return "AIR";
         if (Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) {

@@ -22,7 +22,7 @@ public class SoundConfig {
         if (sound == null) return;
         player.playSound(location, sound, category, volume, pitch);
     }
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public static SoundConfig fromConfig(org.bukkit.configuration.ConfigurationSection section) {
     if (section == null) return null;
     String soundName = section.getString("sound");
