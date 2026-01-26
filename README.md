@@ -19,7 +19,7 @@ Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with Ite
 - Particle effects
 - Sound effects
 
-### 🔨 Custom Workbenches
+### 🔨 Custom Workbenches & Smithing tables
 - Flexible slot layout
 - Drag & drop crafting
 - Particle effects
@@ -31,7 +31,7 @@ Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with Ite
 - HEX colors support
 - Legacy color codes support
 - Progress bar details
-- Recipe book for furnaces and workbenches
+- Recipe book for furnaces, smithing tables and workbenches
 
 ## 📦 Requirements
 
@@ -47,7 +47,7 @@ Custom furnaces and workbenches plugin for Paper and Spigot for 1.20.5+ with Ite
 2. Place `IAInteractables.jar` into `plugins/` folder
 3. Install dependencies (PlaceholderAPI, ItemsAdder)
 4. Restart server
-5. Configure furnaces/workbenches in `plugins/IAInteractables/`
+5. Configure furnaces/workbenches/smithing tables in `plugins/IAInteractables/`
 
 ## ⚙️ Configuration
 
@@ -259,6 +259,56 @@ recipes:
       amount: 1
     8:
       material: STONE
+      amount: 1
+```
+
+### Smithing table Example (`smithing_table/default.yml`)
+
+```yaml
+title: "&8Custom Smithing Table"
+itemsadder-furniture: "myitems:smithing_table" #Also rename default.yml to [custom_smithing_table] for it to work!
+structure:
+  - "X X X X X X X X X"
+  - "X T B A X R X X X"
+  - "X X X X X X X X Z"
+
+# T - template
+# B - base
+# A - addition
+# R - result
+# X - filler
+# Z - back button for recipe book
+
+filler:
+  material: BLACK_STAINED_GLASS_PANE
+  name: ""
+
+effects:
+  on-craft:
+    sound:
+      sound: BLOCK_ANVIL_USE
+      volume: 1.0
+      pitch: 1.0
+    particle:
+      particle: CRIT
+      count: 10
+      offset-x: 0.5
+      offset-y: 0.5
+      offset-z: 0.5
+
+recipes:
+  first_recipe:
+    result:
+      material: NETHERITE_CHESTPLATE
+      amount: 1
+    template:
+      material: NETHERITE_UPGRADE_SMITHING_TEMPLATE
+      amount: 1
+    base:
+      material: DIAMOND_CHESTPLATE
+      amount: 1
+    addition:
+      material: NETHERITE_INGOT
       amount: 1
 ```
 
