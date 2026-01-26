@@ -89,12 +89,14 @@ public class SmithingGUI {
         if (!checkSlot(2, recipe.getAddition())) return false;
         return true;
     }
-    @SuppressWarnings("null")
     private boolean checkSlot(int slotIndex, ItemStack required) {
         ItemStack current = inventory.getItem(slotIndex);
-        if (required == null && current != null && !current.getType().isAir()) return false;
-        if (required != null && (current == null || current.getType().isAir())) return false;
-        if (required == null) return true;
+        if (required == null) {
+            return current == null || current.getType().isAir();
+        }
+        if (current == null || current.getType().isAir()) {
+            return false;
+        }
         return isSameItem(current, required) && current.getAmount() >= required.getAmount();
     }
     private boolean isSameItem(ItemStack item1, ItemStack item2) {
@@ -118,16 +120,22 @@ public class SmithingGUI {
         @Override
         public void handleClick(ClickType clickType, Player player, InventoryClickEvent event) {
             if (currentRecipe == null) return;
+            SmithingRecipe recipeToCraft = currentRecipe;
             if (event.isLeftClick() || event.isRightClick() || event.isShiftClick()) {
                 if (player.getItemOnCursor().getType() != Material.AIR) return;
-                player.setItemOnCursor(currentRecipe.getResult().clone());
+                player.setItemOnCursor(recipeToCraft.getResult().clone());
                 if (table.getEffects() != null && table.getEffects().getOnCraft() != null) {
                     table.getEffects().getOnCraft().play(player, player.getLocation());
                 }
-                consumeItem(0, currentRecipe.getTemplate());
-                consumeItem(1, currentRecipe.getBase());
-                consumeItem(2, currentRecipe.getAddition());
-                updateResult();
+                inventory.setPostUpdateHandler(null);
+                try {
+                    consumeItem(0, recipeToCraft.getTemplate());
+                    consumeItem(1, recipeToCraft.getBase()); 
+                    consumeItem(2, recipeToCraft.getAddition()); 
+                } finally {
+                    inventory.setPostUpdateHandler(e -> updateResult());
+                    updateResult();
+                }
             }
         }
         private void consumeItem(int slot, ItemStack required) {
