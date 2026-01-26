@@ -85,7 +85,7 @@ public class RecipeViewGUI {
                     if (c == 'X') guiBuilder.addIngredient('X', furnace.getFiller());
                     else if (c == 'P') guiBuilder.addIngredient('P', new SimpleItem(new ItemBuilder(furnace.getProgressBar().getItemForProgress(0))));
                     else if (c == 'R') guiBuilder.addIngredient('R', new SimpleItem(new ItemBuilder(fnRecipe.getResult())));
-                    else if (c == 'B') guiBuilder.addIngredient('B', backButton);
+                    else if (c == 'Z') guiBuilder.addIngredient('Z', backButton);
                     else {
                         if (fnRecipe.getRaws().containsKey(c)) {
                             Set<ItemStack> raws = fnRecipe.getRaws().get(c);

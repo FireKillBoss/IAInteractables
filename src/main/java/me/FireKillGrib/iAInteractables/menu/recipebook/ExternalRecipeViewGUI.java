@@ -68,11 +68,11 @@ public class ExternalRecipeViewGUI {
             guiBuilder.setStructure(
                     "X X X X X X X X X",
                     "X X I X F X R X X",
-                    "X X X X X X B X X"
+                    "X X X X X X Z X X"
             );
             guiBuilder.addIngredient('X', filler);
             guiBuilder.addIngredient('R', resultItem);
-            guiBuilder.addIngredient('B', backButton);
+            guiBuilder.addIngredient('Z', backButton);
             if (recipe.getFurnaceInput() != null) {
                 guiBuilder.addIngredient('I', new SimpleItem(new ItemBuilder(recipe.getFurnaceInput())));
             } else {
